@@ -1,0 +1,133 @@
+<div class="home-container">
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <span class="logo-text">FeDoan</span>
+        <span class="tagline">Nền tảng quản lý dự án hiện đại</span>
+      </h1>
+      <p class="hero-description">
+        Tổ chức công việc hiệu quả, quản lý dự án thông minh và đạt được mục tiêu
+        một cách dễ dàng với FeDoan - giải pháp toàn diện cho mọi team.
+      </p>
+      <div class="hero-actions">
+        <a class="btn-primary large" routerLink="/register">
+          <i class="fas fa-rocket"></i>
+          Bắt đầu miễn phí
+        </a>
+        <a class="btn-secondary large" routerLink="/login">
+          <i class="fas fa-sign-in-alt"></i>
+          Đăng nhập
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-number">500+</span>
+          <span class="stat-label">Dự án hoàn thành</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">1000+</span>
+          <span class="stat-label">Người dùng hài lòng</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">99%</span>
+          <span class="stat-label">Thời gian hoạt động</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-image">
+      <div class="dashboard-preview">
+        <div class="preview-header">
+          <div class="preview-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+        <div class="preview-content">
+          <div class="preview-sidebar"></div>
+          <div class="preview-main">
+            <div class="preview-card"></div>
+            <div class="preview-card"></div>
+            <div class="preview-card small"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section">
+    <div class="section-container">
+      <h2 class="section-title">Tính năng nổi bật</h2>
+      <p class="section-subtitle">Mọi thứ bạn cần để quản lý dự án hiệu quả</p>
+      <div class="features-grid">
+        <div class="feature-card" *ngFor="let feature of features">
+          <div class="feature-icon" [ngClass]="feature.iconClass">
+            <i class="fas" [ngClass]="feature.icon"></i>
+          </div>
+          <h3 class="feature-title">{{ feature.title }}</h3>
+          <p class="feature-description">{{ feature.description }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits Section -->
+  
+
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="cta-container">
+      <h2 class="cta-title">Sẵn sàng bắt đầu?</h2>
+      <p class="cta-description">
+        Tham gia cùng hàng nghìn team đang sử dụng FeDoan để quản lý dự án hiệu quả
+      </p>
+      <div class="cta-actions">
+        <a class="btn-primary large" routerLink="/register">
+          Tạo tài khoản miễn phí
+        </a>
+        <button class="btn-outline large" (click)="viewDemo()" type="button">
+          Xem demo
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="home-footer">
+    <div class="footer-container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <h3>FeDoan</h3>
+          <p>Giải pháp quản lý dự án toàn diện</p>
+        </div>
+        <div class="footer-links">
+          <div class="link-group">
+            <h4>Sản phẩm</h4>
+            <a href="#">Tính năng</a>
+            <a href="#">Giá cả</a>
+            <a href="#">Bảo mật</a>
+          </div>
+          <div class="link-group">
+            <h4>Hỗ trợ</h4>
+            <a href="#">Tài liệu</a>
+            <a href="#">Liên hệ</a>
+            <a href="#">FAQ</a>
+          </div>
+          <div class="link-group">
+            <h4>Công ty</h4>
+            <a href="#">Về chúng tôi</a>
+            <a href="#">Blog</a>
+            <a href="#">Tuyển dụng</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 FeDoan. Tất cả quyền được bảo lưu.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+
