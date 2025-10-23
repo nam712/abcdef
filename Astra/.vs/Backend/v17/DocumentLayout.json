@@ -1,22 +1,38 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\code\\C#\\New folder\\Astra\\",
+  "WorkspaceRootPath": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|d:\\code\\c#\\new folder\\astra\\astra\\backend.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|solutionrelative:astra\\backend.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|e:\\new folder\\multi-platform-sales-management\\astra\\astra\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|solutionrelative:astra\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|d:\\code\\c#\\new folder\\astra\\astra\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|e:\\new folder\\multi-platform-sales-management\\astra\\astra\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|solutionrelative:astra\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|d:\\code\\c#\\new folder\\astra\\astra\\backend.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
-      "RelativeMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|solutionrelative:astra\\backend.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
+      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|e:\\new folder\\multi-platform-sales-management\\astra\\astra\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|solutionrelative:astra\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|d:\\code\\c#\\new folder\\astra\\astra\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|e:\\new folder\\multi-platform-sales-management\\astra\\astra\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|solutionrelative:astra\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|e:\\new folder\\multi-platform-sales-management\\astra\\astra\\services\\authservices\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|solutionrelative:astra\\services\\authservices\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|e:\\new folder\\multi-platform-sales-management\\astra\\astra\\dtos\\auth\\authdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|solutionrelative:astra\\dtos\\auth\\authdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|e:\\new folder\\multi-platform-sales-management\\astra\\astra\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|solutionrelative:astra\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|e:\\new folder\\multi-platform-sales-management\\astra\\astra\\helpers\\jwthelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FCF2FC2F-7B76-4B64-BE3C-001CFF21EA85}|Astra\\Backend.csproj|solutionrelative:astra\\helpers\\jwthelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,7 +42,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 6,
           "Children": [
             {
               "$type": "Bookmark",
@@ -41,57 +57,107 @@
               "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Backend.csproj",
-              "DocumentMoniker": "D:\\code\\C#\\New folder\\Astra\\Astra\\Backend.csproj",
-              "RelativeDocumentMoniker": "Astra\\Backend.csproj",
-              "ToolTip": "D:\\code\\C#\\New folder\\Astra\\Astra\\Backend.csproj",
-              "RelativeToolTip": "Astra\\Backend.csproj",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAwAAABRAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2025-10-21T03:34:18.907Z",
-              "EditorCaption": ""
-            },
-            {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "Backend",
-              "DocumentMoniker": "D:\\code\\C#\\New folder\\Astra\\Astra\\Backend.csproj",
-              "RelativeDocumentMoniker": "Astra\\Backend.csproj",
-              "ToolTip": "D:\\code\\C#\\New folder\\Astra\\Astra\\Backend.csproj",
-              "RelativeToolTip": "Astra\\Backend.csproj",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2025-10-21T02:43:48.042Z",
+              "Title": "launchSettings.json",
+              "DocumentMoniker": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Properties\\launchSettings.json",
+              "RelativeDocumentMoniker": "Astra\\Properties\\launchSettings.json",
+              "ToolTip": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Properties\\launchSettings.json",
+              "RelativeToolTip": "Astra\\Properties\\launchSettings.json",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-10-23T08:49:44.904Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
               "Title": "appsettings.json",
-              "DocumentMoniker": "D:\\code\\C#\\New folder\\Astra\\Astra\\appsettings.json",
+              "DocumentMoniker": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\appsettings.json",
               "RelativeDocumentMoniker": "Astra\\appsettings.json",
-              "ToolTip": "D:\\code\\C#\\New folder\\Astra\\Astra\\appsettings.json",
+              "ToolTip": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\appsettings.json",
               "RelativeToolTip": "Astra\\appsettings.json",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAkAAAAAAAAA",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABMAAAABAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-10-21T02:43:42.205Z"
+              "WhenOpened": "2025-10-23T08:19:31.544Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "Program.cs",
-              "DocumentMoniker": "D:\\code\\C#\\New folder\\Astra\\Astra\\Program.cs",
+              "DocumentMoniker": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Program.cs",
               "RelativeDocumentMoniker": "Astra\\Program.cs",
-              "ToolTip": "D:\\code\\C#\\New folder\\Astra\\Astra\\Program.cs",
+              "ToolTip": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Program.cs",
               "RelativeToolTip": "Astra\\Program.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "ViewState": "AQIAAIwAAAAAAAAAAAAIwJcAAAAHAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-21T02:43:30.327Z",
+              "WhenOpened": "2025-10-23T08:16:22.464Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "Astra\\Controllers\\AuthController.cs",
+              "ToolTip": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "Astra\\Controllers\\AuthController.cs",
+              "ViewState": "AQIAANoAAAAAAAAAAAAAwOUAAAAZAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-22T17:00:38.346Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Data\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "Astra\\Data\\ApplicationDbContext.cs",
+              "ToolTip": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Data\\ApplicationDbContext.cs",
+              "RelativeToolTip": "Astra\\Data\\ApplicationDbContext.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAJIBAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-22T16:58:55.18Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "AuthDtos.cs",
+              "DocumentMoniker": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\DTOs\\Auth\\AuthDtos.cs",
+              "RelativeDocumentMoniker": "Astra\\DTOs\\Auth\\AuthDtos.cs",
+              "ToolTip": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\DTOs\\Auth\\AuthDtos.cs",
+              "RelativeToolTip": "Astra\\DTOs\\Auth\\AuthDtos.cs",
+              "ViewState": "AQIAAHgAAAAAAAAAAAAAABMAAAAqAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-22T16:58:20.291Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "JwtHelper.cs",
+              "DocumentMoniker": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Helpers\\JwtHelper.cs",
+              "RelativeDocumentMoniker": "Astra\\Helpers\\JwtHelper.cs",
+              "ToolTip": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Helpers\\JwtHelper.cs",
+              "RelativeToolTip": "Astra\\Helpers\\JwtHelper.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAGsAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-22T16:57:07.79Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "AuthService.cs",
+              "DocumentMoniker": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Services\\AuthServices\\AuthService.cs",
+              "RelativeDocumentMoniker": "Astra\\Services\\AuthServices\\AuthService.cs",
+              "ToolTip": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Services\\AuthServices\\AuthService.cs",
+              "RelativeToolTip": "Astra\\Services\\AuthServices\\AuthService.cs",
+              "ViewState": "AQIAAAwAAAAAAAAAAAAAAAoAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-22T16:55:43.358Z",
               "EditorCaption": ""
             }
           ]
