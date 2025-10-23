@@ -86,11 +86,18 @@ builder.Services.AddCors(options =>
 
 // ==================== 4. DEPENDENCY INJECTION ====================
 
+// AutoMapper
+builder.Services.AddAutoMapper(typeof(Program));
+
 // Helpers
 builder.Services.AddScoped<JwtHelper>();
 
+// Repositories
+builder.Services.AddScoped<YourShopManagement.API.Repositories.ISupplierRepository, YourShopManagement.API.Repositories.SupplierRepository>();
+
 // Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ISupplierService, SupplierService>();
 
 // ==================== 5. SWAGGER ====================
 builder.Services.AddEndpointsApiExplorer();
