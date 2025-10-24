@@ -1,0 +1,237 @@
+<div class="register-container">
+  <div class="register-content">
+    <div class="register-form-section">
+      <div class="form-header">
+        <a class="logo" routerLink="/">
+          <span class="logo-text">FeDoan</span>
+        </a>
+        <h1 class="form-title">Tạo tài khoản</h1>
+        <p class="form-subtitle">Bước {{ currentStep }} / {{ totalSteps }}</p>
+        
+        <!-- Progress Bar -->
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="getProgressPercentage()"></div>
+          </div>
+          <div class="progress-steps">
+            <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+              <span>1</span>
+            </div>
+            <div class="step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
+              <span>2</span>
+            </div>
+            <div class="step" [class.active]="currentStep >= 3">
+              <span>3</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form class="register-form" [formGroup]="registerForm" (ngSubmit)="currentStep === totalSteps ? onSubmit() : nextStep()">
+        
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+        <div class="alert alert-success" *ngIf="successMessage">
+          {{ successMessage }}
+        </div>
+
+        <!-- Bước 1: Thông tin cá nhân -->
+        <div class="step-content" *ngIf="currentStep === 1">
+          <h3 class="step-title">Thông tin cá nhân</h3>
+          
+          <div class="form-group">
+            <label for="shopOwnerName">Họ và tên *</label>
+            <input 
+              type="text" 
+              id="shopOwnerName" 
+              formControlName="shopOwnerName"
+              [class.error]="isFieldInvalid('shopOwnerName')"
+              placeholder="Nhập họ và tên đầy đủ">
+            <div class="error-message" *ngIf="isFieldInvalid('shopOwnerName')">
+              {{ getFieldError('shopOwnerName') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Số điện thoại *</label>
+            <input 
+              type="tel" 
+              id="phone" 
+              formControlName="phone"
+              [class.error]="isFieldInvalid('phone')"
+              placeholder="0987654321">
+            <div class="error-message" *ngIf="isFieldInvalid('phone')">
+              {{ getFieldError('phone') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="shopName">Tên cửa hàng *</label>
+            <input 
+              type="text" 
+              id="shopName" 
+              formControlName="shopName"
+              [class.error]="isFieldInvalid('shopName')"
+              placeholder="Nhập tên cửa hàng">
+            <div class="error-message" *ngIf="isFieldInvalid('shopName')">
+              {{ getFieldError('shopName') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Bước 2: Thông tin cửa hàng -->
+        <div class="step-content" *ngIf="currentStep === 2">
+          <h3 class="step-title">Thông tin cửa hàng</h3>
+          
+          <div class="form-group">
+            <label for="shopAddress">Địa chỉ cửa hàng</label>
+            <input 
+              type="text" 
+              id="shopAddress" 
+              formControlName="shopAddress"
+              placeholder="Nhập địa chỉ (không bắt buộc)">
+          </div>
+
+          <div class="form-group">
+            <label for="businessCategoryId">Ngành hàng</label>
+            <select 
+              id="businessCategoryId" 
+              formControlName="businessCategoryId">
+              <option value="">Chọn ngành hàng (không bắt buộc)</option>
+              @for (category of businessCategories; track category.id) {
+                <option [value]="category.id">{{ category.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="verificationCode">Mã xác thực *</label>
+            <div class="verification-helper">
+              <small>Mã của bạn: <strong>{{ generatedVerificationCode }}</strong></small>
+              <button type="button" class="refresh-code" (click)="changeVerificationCode()">
+                <i class="fa fa-refresh"></i>
+              </button>
+            </div>
+            <input 
+              type="text" 
+              id="verificationCode" 
+              formControlName="verificationCode"
+              [class.error]="isFieldInvalid('verificationCode')"
+              placeholder="Nhập mã xác thực"
+              maxlength="6">
+            <div class="error-message" *ngIf="isFieldInvalid('verificationCode')">
+              {{ getFieldError('verificationCode') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Bước 3: Bảo mật -->
+        <div class="step-content" *ngIf="currentStep === 3">
+          <h3 class="step-title">Bảo mật tài khoản</h3>
+          
+          <div class="form-group">
+            <label for="password">Mật khẩu *</label>
+            <input 
+              type="password" 
+              id="password" 
+              formControlName="password"
+              [class.error]="isFieldInvalid('password')"
+              placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)">
+            <div class="error-message" *ngIf="isFieldInvalid('password')">
+              {{ getFieldError('password') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Xác nhận mật khẩu *</label>
+            <input 
+              type="password" 
+              id="confirmPassword" 
+              formControlName="confirmPassword"
+              [class.error]="isFieldInvalid('confirmPassword')"
+              placeholder="Nhập lại mật khẩu">
+            <div class="error-message" *ngIf="isFieldInvalid('confirmPassword')">
+              {{ getFieldError('confirmPassword') }}
+            </div>
+          </div>
+
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="agreeToTerms">
+              <span class="checkmark"></span>
+              <span class="checkbox-text">Tôi đồng ý với <a href="#" class="link">Điều khoản sử dụng</a></span>
+            </label>
+            <div class="error-message" *ngIf="isFieldInvalid('agreeToTerms')">
+              Vui lòng đồng ý với điều khoản
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button 
+            type="button" 
+            class="btn-secondary" 
+            *ngIf="currentStep > 1"
+            (click)="previousStep()">
+            <i class="fas fa-arrow-left"></i>
+            Quay lại
+          </button>
+          
+          <button 
+            type="submit" 
+            class="btn-primary" 
+            [disabled]="isLoading">
+            @if (isLoading) {
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>Đang xử lý...</span>
+            } @else {
+              <span>{{ getStepButtonText() }}</span>
+              <i class="fas" [ngClass]="currentStep < totalSteps ? 'fa-arrow-right' : 'fa-check'"></i>
+            }
+          </button>
+        </div>
+
+        <div class="form-footer">
+          <p>Đã có tài khoản? <a routerLink="/login" class="link">Đăng nhập ngay</a></p>
+        </div>
+      </form>
+    </div>
+
+    <div class="register-info-section">
+      <div class="info-content">
+        <h2>Tham gia cùng hàng nghìn team</h2>
+        <p>Quản lý dự án hiệu quả và đạt được mục tiêu một cách dễ dàng</p>
+        
+        <div class="features-list">
+          <div class="feature-item">
+            <i class="fas fa-check-circle"></i>
+            <span>Quản lý task và timeline</span>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-check-circle"></i>
+            <span>Báo cáo và phân tích</span>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-check-circle"></i>
+            <span>Tích hợp đa nền tảng</span>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-check-circle"></i>
+            <span>Hỗ trợ 24/7</span>
+          </div>
+        </div>
+
+        <div class="testimonial">
+          <p>"FeDoan đã giúp đội ngũ chúng tôi tăng hiệu suất làm việc lên 40%"</p>
+          <div class="testimonial-author">
+            <strong>Nguyễn Văn A</strong>
+            <span>Giám đốc điều hành, Công ty Công nghệ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+

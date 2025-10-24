@@ -1,0 +1,142 @@
+<div class="profile-container">
+  <!-- Success Message Overlay -->
+  <div class="success-overlay" *ngIf="showSuccessMessage">
+    <div class="success-message">
+      <div class="success-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h2>Đăng ký thành công!</h2>
+      <p>Tài khoản của bạn đã được tạo thành công.<br>Đang chuyển đến trang đăng nhập...</p>
+      <div class="loading-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-content">
+    <div class="profile-form-section">
+      <div class="form-header">
+        <div class="progress-indicator">
+          <div class="step completed">
+            <div class="step-number">1</div>
+            <span>Đăng ký</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step active">
+            <div class="step-number">2</div>
+            <span>Hoàn thiện</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <span>Hoàn tất</span>
+          </div>
+        </div>
+
+        <h1 class="form-title">Hoàn thiện hồ sơ</h1>
+        <p class="form-subtitle">Vui lòng cung cấp thêm thông tin để hoàn tất tài khoản của bạn</p>
+      </div>
+
+      <form class="profile-form" [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="businessSector">Ngành hàng kinh doanh *</label>
+          <select 
+            id="businessSector" 
+            formControlName="businessSector"
+            [class.error]="isFieldInvalid('businessSector')"
+            size="3">
+            <option value="">Chọn ngành hàng của bạn</option>
+            @for (sector of businessSectors; track sector.value) {
+              <option [value]="sector.value">{{ sector.label }}</option>
+            }
+          </select>
+          <div class="error-message" *ngIf="isFieldInvalid('businessSector')">
+            {{ getFieldError('businessSector') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="companyName">Tên công ty của bạn *</label>
+          <input 
+            type="text" 
+            id="companyName" 
+            formControlName="companyName"
+            [class.error]="isFieldInvalid('companyName')"
+            placeholder="Nhập tên công ty hoặc doanh nghiệp">
+          <div class="error-message" *ngIf="isFieldInvalid('companyName')">
+            {{ getFieldError('companyName') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mật khẩu *</label>
+          <div class="password-input">
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              id="password" 
+              formControlName="password"
+              [class.error]="isFieldInvalid('password')"
+              placeholder="Tạo mật khẩu mạnh">
+            <button type="button" class="password-toggle" (click)="togglePassword()">
+              <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+            </button>
+          </div>
+          <div class="password-requirements">
+            <small>Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt</small>
+          </div>
+          <div class="error-message" *ngIf="isFieldInvalid('password')">
+            {{ getFieldError('password') }}
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button type="button" class="btn-secondary" (click)="skipProfile()">
+            Bỏ qua
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="profileForm.invalid || isLoading">
+            @if (isLoading) {
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>Đang xử lý...</span>
+            } @else {
+              <span>Hoàn tất</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="profile-info-section">
+      <div class="info-content">
+        <div class="icon-wrapper">
+          <i class="fas fa-building"></i>
+        </div>
+        <h2>Tùy chỉnh cho doanh nghiệp</h2>
+        <div class="benefits-list">
+          <div class="benefit-item">
+            <i class="fas fa-check"></i>
+            <span>Template phù hợp với ngành nghề</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-check"></i>
+            <span>Báo cáo chuyên biệt theo lĩnh vực</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-check"></i>
+            <span>Tích hợp công cụ ngành hàng</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-check"></i>
+            <span>Kết nối cộng đồng doanh nghiệp</span>
+          </div>
+        </div>
+        
+        <div class="security-note">
+          <i class="fas fa-shield-alt"></i>
+          <span>Mật khẩu được mã hóa và bảo mật tuyệt đối</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

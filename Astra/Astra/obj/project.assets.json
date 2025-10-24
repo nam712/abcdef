@@ -3970,19 +3970,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Duc Thai\\.nuget\\packages\\": {}
+    "C:\\Users\\nhatm\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Backend.csproj",
+      "projectUniqueName": "C:\\New project\\Multi-Platform-Sales-Management\\Astra\\Astra\\Backend.csproj",
       "projectName": "Backend",
-      "projectPath": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\Backend.csproj",
-      "packagesPath": "C:\\Users\\Duc Thai\\.nuget\\packages\\",
-      "outputPath": "E:\\New folder\\Multi-Platform-Sales-Management\\Astra\\Astra\\obj\\",
+      "projectPath": "C:\\New project\\Multi-Platform-Sales-Management\\Astra\\Astra\\Backend.csproj",
+      "packagesPath": "C:\\Users\\nhatm\\.nuget\\packages\\",
+      "outputPath": "C:\\New project\\Multi-Platform-Sales-Management\\Astra\\Astra\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "C:\\Users\\Duc Thai\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\nhatm\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -4082,7 +4087,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.302/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.403/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
