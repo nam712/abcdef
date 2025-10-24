@@ -1,4 +1,40 @@
 <div class="home-container">
+  <!-- Fixed Navigation Header -->
+  <header class="fixed-header" [class.scrolled]="isScrolled">
+    <div class="header-container">
+      <a class="header-logo" routerLink="/">FeDoan</a>
+      <nav class="main-nav">
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="#solutions">Giải pháp</a>
+          </li>
+          <li class="nav-item">
+            <a href="#services">Dịch vụ</a>
+          </li>
+          <li class="nav-item">
+            <a href="#news">Tin tức</a>
+          </li>
+        </ul>
+      </nav>
+      <button class="mobile-menu-btn" (click)="toggleMobileMenu()" type="button">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="mobile-menu" [class.active]="isMobileMenuOpen">
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="#solutions" (click)="closeMobileMenu()">Giải pháp</a>
+          </li>
+          <li class="nav-item">
+            <a href="#services" (click)="closeMobileMenu()">Dịch vụ</a>
+          </li>
+          <li class="nav-item">
+            <a href="#news" (click)="closeMobileMenu()">Tin tức</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
   <section class="hero-section">
     <div class="hero-content">
       <h1 class="hero-title">
@@ -10,14 +46,14 @@
         một cách dễ dàng với FeDoan - giải pháp toàn diện cho mọi team.
       </p>
       <div class="hero-actions">
-        <a class="btn-primary large" routerLink="/register">
+        <button class="btn-primary large" (click)="navigateToRegister()">
           <i class="fas fa-rocket"></i>
           Bắt đầu miễn phí
-        </a>
-        <a class="btn-secondary large" routerLink="/login">
+        </button>
+        <button class="btn-secondary large" (click)="navigateToLogin()">
           <i class="fas fa-sign-in-alt"></i>
           Đăng nhập
-        </a>
+        </button>
       </div>
       <div class="hero-stats">
         <div class="stat-item">
@@ -61,13 +97,15 @@
       <h2 class="section-title">Tính năng nổi bật</h2>
       <p class="section-subtitle">Mọi thứ bạn cần để quản lý dự án hiệu quả</p>
       <div class="features-grid">
-        <div class="feature-card" *ngFor="let feature of features">
-          <div class="feature-icon" [ngClass]="feature.iconClass">
-            <i class="fas" [ngClass]="feature.icon"></i>
+        @for (feature of features; track feature.title) {
+          <div class="feature-card">
+            <div class="feature-icon {{feature.iconClass}}">
+              <i class="fas {{feature.icon}}"></i>
+            </div>
+            <h3 class="feature-title">{{ feature.title }}</h3>
+            <p class="feature-description">{{ feature.description }}</p>
           </div>
-          <h3 class="feature-title">{{ feature.title }}</h3>
-          <p class="feature-description">{{ feature.description }}</p>
-        </div>
+        }
       </div>
     </div>
   </section>
@@ -84,9 +122,9 @@
         Tham gia cùng hàng nghìn team đang sử dụng FeDoan để quản lý dự án hiệu quả
       </p>
       <div class="cta-actions">
-        <a class="btn-primary large" routerLink="/register">
+        <button class="btn-primary large" (click)="navigateToRegister()">
           Tạo tài khoản miễn phí
-        </a>
+        </button>
         <button class="btn-outline large" (click)="viewDemo()" type="button">
           Xem demo
         </button>

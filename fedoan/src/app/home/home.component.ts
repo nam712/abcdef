@@ -1,51 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-
-interface User {
-  name: string;
-  avatar?: string;
-}
-
-interface Stats {
-  totalProjects: number;
-  completedTasks: number;
-  avgProgress: number;
-  teamMembers: number;
-}
-
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  progress: number;
-  status: 'active' | 'pending' | 'completed';
-  deadline: Date;
-  team: { name: string; avatar?: string }[];
-}
-
-interface Activity {
-  id: number;
-  type: 'task' | 'project' | 'team';
-  message: string;
-  timestamp: Date;
-}
-
-interface Feature {
-  title: string;
-  description: string;
-  icon: string;
-  iconClass: string;
-}
-
-interface Benefit {
-  title: string;
-  description: string;
-}
-
-interface TeamMember {
-  initial: string;
-}
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-home',
@@ -54,22 +9,24 @@ interface TeamMember {
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   currentDate = new Date();
   notificationCount = 3;
+  isScrolled = false;
+  isMobileMenuOpen = false;
 
-  user: User = {
+  user = {
     name: 'Nguyễn Văn A'
   };
 
-  stats: Stats = {
+  stats = {
     totalProjects: 12,
     completedTasks: 48,
     avgProgress: 75,
     teamMembers: 8
   };
 
-  recentProjects: Project[] = [
+  recentProjects = [
     {
       id: 1,
       name: 'Website E-commerce',
@@ -111,7 +68,7 @@ export class HomeComponent implements OnInit {
     }
   ];
 
-  recentActivities: Activity[] = [
+  recentActivities = [
     {
       id: 1,
       type: 'task',
@@ -138,7 +95,7 @@ export class HomeComponent implements OnInit {
     }
   ];
 
-  features: Feature[] = [
+  features = [
     {
       title: 'Quản lý Task',
       description: 'Tạo, phân công và theo dõi tiến độ các task một cách trực quan với giao diện kéo thả đơn giản.',
@@ -177,7 +134,7 @@ export class HomeComponent implements OnInit {
     }
   ];
 
-  benefits: Benefit[] = [
+  benefits = [
     {
       title: 'Tăng năng suất lên 40%',
       description: 'Tự động hóa quy trình làm việc và giảm thiểu thời gian quản lý thủ công'
@@ -196,76 +153,37 @@ export class HomeComponent implements OnInit {
     }
   ];
 
-
-
   constructor(private router: Router) {}
 
-  ngOnInit() {
-    // Load initial data
+  ngOnInit(): void {}
+
+  ngOnDestroy(): void {}
+
+  @HostListener('window:scroll', ['$event'])
+  onWindowScroll() {
+    this.isScrolled = window.pageYOffset > 50;
   }
 
-  showNotifications() {
-    console.log('Show notifications');
-    // TODO: Implement notifications modal
+  toggleMobileMenu() {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
   }
 
-  createNewProject() {
-    console.log('Create new project');
-    // TODO: Navigate to project creation
-  }
-
-  createTask() {
-    console.log('Create new task');
-    // TODO: Open task creation modal
-  }
-
-  inviteTeamMember() {
-    console.log('Invite team member');
-    // TODO: Open invite modal
-  }
-
-  generateReport() {
-    console.log('Generate report');
-    // TODO: Navigate to reports
-  }
-
-  viewCalendar() {
-    console.log('View calendar');
-    // TODO: Navigate to calendar
+  closeMobileMenu() {
+    this.isMobileMenuOpen = false;
   }
 
   navigateToLogin() {
-    console.log('Login button clicked!');
-    // Test if router is working
-    this.router.navigateByUrl('/login');
+    console.log('Navigating to login...');
+    this.router.navigate(['/login']);
   }
 
   navigateToRegister() {
-    console.log('Register button clicked!');
-    // Test if router is working  
-    this.router.navigateByUrl('/register');
+    console.log('Navigating to register...');
+    this.router.navigate(['/register']);
   }
 
   viewDemo() {
     console.log('Demo button clicked!');
     alert('Chức năng demo đang được phát triển');
-  }
-
-  getStatusText(status: string): string {
-    switch (status) {
-      case 'active': return 'Đang thực hiện';
-      case 'pending': return 'Chờ xử lý';
-      case 'completed': return 'Hoàn thành';
-      default: return status;
-    }
-  }
-
-  getActivityIcon(type: string): string {
-    switch (type) {
-      case 'task': return 'fa-check-circle';
-      case 'project': return 'fa-folder';
-      case 'team': return 'fa-user-plus';
-      default: return 'fa-info-circle';
-    }
   }
 }

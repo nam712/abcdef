@@ -44,17 +44,38 @@ namespace YourShopManagement.API.Controllers
         [Tags("🔐 Authentication")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
+            // Log để debug
+            Console.WriteLine("========================================");
+            Console.WriteLine("📥 RECEIVED REGISTRATION REQUEST");
+            Console.WriteLine($"ShopOwnerName: {dto.ShopOwnerName}");
+            Console.WriteLine($"Phone: {dto.Phone}");
+            Console.WriteLine($"Email: {dto.Email}");
+            Console.WriteLine($"Gender: {dto.Gender}");
+            Console.WriteLine($"BusinessCategoryId: {dto.BusinessCategoryId}");
+            Console.WriteLine($"ShopName: {dto.ShopName}");
+            Console.WriteLine($"ShopAddress: {dto.ShopAddress}");
+            Console.WriteLine($"TermsAgreed: {dto.TermsAndConditionsAgreed}");
+            Console.WriteLine("========================================");
+
             // Kiểm tra ModelState
             if (!ModelState.IsValid)
             {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                Console.WriteLine("❌ MODEL STATE INVALID:");
+                foreach (var error in errors)
+                {
+                    Console.WriteLine($"  - {error}");
+                }
+
                 return BadRequest(new
                 {
                     success = false,
                     message = "Dữ liệu không hợp lệ",
-                    errors = ModelState.Values
-                        .SelectMany(v => v.Errors)
-                        .Select(e => e.ErrorMessage)
-                        .ToList()
+                    errors = errors
                 });
             }
 
@@ -62,9 +83,11 @@ namespace YourShopManagement.API.Controllers
 
             if (!result.Success)
             {
+                Console.WriteLine($"❌ Registration failed: {result.Message}");
                 return BadRequest(result);
             }
 
+            Console.WriteLine("✅ REGISTRATION SUCCESSFUL!");
             return Ok(result);
         }
 

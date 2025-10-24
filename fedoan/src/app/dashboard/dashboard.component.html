@@ -1,0 +1,175 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <h1 class="logo">FeDoan</h1>
+        <button class="mobile-menu-toggle" (click)="toggleMobileMenu()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <nav class="main-nav" [class.mobile-open]="isMobileMenuOpen">
+          <a href="#" class="nav-link active">Trang chủ</a>
+
+          <!-- Hàng hóa with submenu -->
+          <div class="nav-item dropdown"
+               (mouseenter)="openProductsSubmenu()"
+               (mouseleave)="closeProductsSubmenu()">
+            <button class="nav-link dropdown-toggle" type="button"
+                    (click)="toggleProductsSubmenu(); $event.stopPropagation()">
+              Hàng hóa <i class="fas fa-caret-down"></i>
+            </button>
+
+            <div class="submenu" [class.open]="productsSubmenuOpen" role="menu" [attr.aria-hidden]="!productsSubmenuOpen">
+              <a href="#" class="nav-link" (click)="navigateToProducts(); $event.preventDefault()">Danh sách Hàng hóa</a>
+              <a href="#" class="nav-link" (click)="navigateToStockIn(); $event.preventDefault()">Nhập kho</a>
+              <a href="#" class="nav-link" (click)="navigateToStockOut(); $event.preventDefault()">Xuất kho</a>
+            </div>
+          </div>
+
+          <a href="#" class="nav-link" (click)="navigateToEmployees()">Nhân viên</a>
+          <a href="#" class="nav-link" (click)="navigateToReports()">Báo cáo</a>
+          <a href="#" class="nav-link" (click)="navigateToManufacturers()">Nhà sản xuất</a>
+        </nav>
+      </div>
+      
+      <div class="user-section">
+        <button class="theme-toggle" (click)="changeTheme()" title="Đổi theme">
+          <i class="fas fa-palette"></i>
+          <span>{{ getCurrentThemeLabel() }}</span>
+        </button>
+        
+        <div class="notifications">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge">3</span>
+        </div>
+        
+        <div class="user-profile">
+          <img [src]="currentUser.avatar" [alt]="currentUser.name" class="user-avatar">
+          <div class="user-info">
+            <span class="user-name">{{ currentUser.name }}</span>
+            <button class="logout-btn" (click)="logout()" title="Đăng xuất">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Đăng xuất</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="dashboard-main">
+    <!-- Welcome Section -->
+    <section class="welcome-section">
+      <div class="welcome-content">
+        <h2>Chào mừng trở lại, {{ currentUser.name }}!</h2>
+        <p>Hôm nay bạn có {{ upcomingTasks.length }} task cần hoàn thành</p>
+      </div>
+      <button class="create-project-btn">
+        <i class="fas fa-plus"></i>
+        Tạo dự án mới
+      </button>
+    </section>
+
+    <!-- Stats Grid -->
+    <section class="stats-section">
+      <div class="stats-grid">
+        <div class="stat-card" [ngClass]="stat.color" *ngFor="let stat of stats">
+          <div class="stat-icon">
+            <i class="fas" [ngClass]="stat.icon"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ stat.value }}</div>
+            <div class="stat-title">{{ stat.title }}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content Grid -->
+    <section class="content-grid">
+      <!-- Recent Projects -->
+      <div class="projects-panel">
+        <div class="panel-header">
+          <h3>Dự án gần đây</h3>
+          <button class="view-all-btn">Xem tất cả</button>
+        </div>
+        <div class="projects-list">
+          <div class="project-item" *ngFor="let project of recentProjects">
+            <div class="project-info">
+              <h4>{{ project.name }}</h4>
+              <div class="project-meta">
+                <span class="deadline">Deadline: {{ project.deadline }}</span>
+                <span class="status" [ngClass]="project.status">{{ project.status }}</span>
+              </div>
+            </div>
+            <div class="progress-section">
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="project.progress"></div>
+              </div>
+              <span class="progress-text">{{ project.progress }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Tasks -->
+      <div class="tasks-panel">
+        <div class="panel-header">
+          <h3>Task sắp tới</h3>
+          <button class="view-all-btn">Xem tất cả</button>
+        </div>
+        <div class="tasks-list">
+          <div class="task-item" *ngFor="let task of upcomingTasks">
+            <div class="task-priority" [ngClass]="task.priority"></div>
+            <div class="task-content">
+              <h4>{{ task.title }}</h4>
+              <div class="task-meta">
+                <span class="project-name">{{ task.project }}</span>
+                <span class="due-date">{{ task.dueDate }}</span>
+              </div>
+            </div>
+            <button class="task-action">
+              <i class="fas fa-check"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions">
+      <h3>Hành động nhanh</h3>
+      <div class="actions-grid">
+        <button class="action-btn">
+          <i class="fas fa-plus"></i>
+          <span>Tạo task mới</span>
+        </button>
+        <button class="action-btn">
+          <i class="fas fa-users"></i>
+          <span>Mời thành viên</span>
+        </button>
+        <button class="action-btn">
+          <i class="fas fa-chart-bar"></i>
+          <span>Xem báo cáo</span>
+        </button>
+        <button class="action-btn">
+          <i class="fas fa-cog"></i>
+          <span>Cài đặt</span>
+        </button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Confirmation Dialog -->
+<app-confirmation-dialog
+  [isVisible]="showLogoutConfirm"
+  title="Đăng xuất"
+  message="Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?"
+  confirmText="Đăng xuất"
+  cancelText="Hủy"
+  type="danger"
+  (confirmed)="confirmLogout()"
+  (cancelled)="cancelLogout()">
+</app-confirmation-dialog>

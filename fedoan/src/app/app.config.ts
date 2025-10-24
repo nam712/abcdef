@@ -1,18 +1,12 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideClientHydration } from '@angular/platform-browser';
-
-const routes = [
-  { path: '', loadComponent: () => import('./home/home.component').then(m => m.HomeComponent) },
-  { path: 'home', loadComponent: () => import('./home/home.component').then(m => m.HomeComponent) },
-  { path: 'login', loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent) },
-  { path: '**', redirectTo: '' }
-];
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideClientHydration()
+    provideHttpClient(withInterceptorsFromDi())
   ]
 };
 

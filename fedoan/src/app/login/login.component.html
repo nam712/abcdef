@@ -1,0 +1,85 @@
+<div class="login-container">
+  <div class="login-content">
+    <div class="login-form-section">
+      <div class="form-header">
+        <a class="logo" routerLink="/">
+          <span class="logo-text">FeDoan</span>
+        </a>
+        <h1 class="form-title">Đăng nhập</h1>
+        <p class="form-subtitle">Chào mừng bạn quay trở lại!</p>
+      </div>
+
+      <form class="login-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+        <div class="alert alert-success" *ngIf="successMessage">
+          {{ successMessage }}
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Số điện thoại *</label>
+          <input 
+            type="tel" 
+            id="phone" 
+            formControlName="phone"
+            [class.error]="isFieldInvalid('phone')"
+            placeholder="0987654321"
+            autocomplete="tel">
+          <div class="error-message" *ngIf="isFieldInvalid('phone')">
+            {{ getFieldError('phone') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mật khẩu *</label>
+          <div class="password-input">
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              id="password" 
+              formControlName="password"
+              [class.error]="isFieldInvalid('password')"
+              placeholder="Nhập mật khẩu"
+              autocomplete="current-password">
+            <button type="button" class="password-toggle" (click)="togglePassword()">
+              <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="isFieldInvalid('password')">
+            {{ getFieldError('password') }}
+          </div>
+        </div>
+
+        <div class="form-options">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="rememberMe">
+            <span class="checkmark"></span>
+            <span class="checkbox-text">Ghi nhớ đăng nhập</span>
+          </label>
+          <a href="#" class="link">Quên mật khẩu?</a>
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || isLoading">
+          @if (isLoading) {
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Đang đăng nhập...</span>
+          } @else {
+            <span>Đăng nhập</span>
+          }
+        </button>
+
+        <div class="form-footer">
+          <p>Chưa có tài khoản? <a routerLink="/register" class="link">Đăng ký ngay</a></p>
+        </div>
+      </form>
+    </div>
+
+    <div class="login-info-section">
+      <div class="info-content">
+        <h2>Quản lý cửa hàng hiệu quả</h2>
+        <p>Đăng nhập để truy cập vào hệ thống quản lý của bạn</p>
+      </div>
+    </div>
+  </div>
+</div>

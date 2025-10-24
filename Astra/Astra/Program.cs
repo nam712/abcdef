@@ -75,11 +75,12 @@ builder.Services.AddAuthorization();
 // ==================== 3. CORS ====================
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowAngular", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowCredentials();
     });
 
 });
@@ -146,49 +147,30 @@ builder.Services.AddSwaggerGen(c =>
 // ==================== BUILD APP ====================
 var app = builder.Build();
 
-// ==================== 6. MIDDLEWARE PIPELINE ====================
-
-// Configure the HTTP request pipeline
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Shop Management API v1");
-        c.RoutePrefix = "swagger"; // Swagger UI t?i /swagger
-    });
+    app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// ⚠️ IMPORTANT: CORS phải đặt trước UseAuthentication
+app.UseCors("AllowAngular");
 
-// CORS - ph?i ??t tr??c Authentication
-app.UseCors("AllowAll"); // Ho?c "AllowSpecificOrigins"
+// Tạm thời tắt HTTPS redirect để test
+// app.UseHttpsRedirection();
 
-// Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// ==================== 7. AUTO MIGRATE DATABASE (Optional) ====================
-// T? ??ng apply migrations khi ch?y app (ch? d�ng cho Development)
-if (app.Environment.IsDevelopment())
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        try
-        {
-            // Ki?m tra k?t n?i
-            await dbContext.Database.CanConnectAsync();
-            Console.WriteLine("? K?t n?i database th�nh c�ng!");
-
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"? L?i k?t n?i database: {ex.Message}");
-        }
-    }
-}
+// Log để biết server đang chạy
+Console.WriteLine("========================================");
+Console.WriteLine("🚀 Backend is running!");
+Console.WriteLine("📍 API Base URL: http://localhost:5001/api");
+Console.WriteLine("📝 Swagger UI: http://localhost:5001/swagger");
+Console.WriteLine("🔐 Auth Endpoint: http://localhost:5001/api/auth/register");
+Console.WriteLine("========================================");
 
 app.Run();
