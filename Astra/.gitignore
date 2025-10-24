@@ -1,0 +1,28 @@
+## Ignore build output folders
+bin/
+obj/
+
+## Visual Studio / Rider / VSCode
+.vs/
+.idea/
+*.suo
+*.user
+*.userprefs
+*.sln.iml
+
+## NuGet Packages
+packages/
+*.nupkg
+
+## Logs and Test Results
+*.log
+TestResults/
+
+## Publish / deploy
+*.Publish.xml
+*.zip
+*.app
+
+## OS Files
+.DS_Store
+Thumbs.db

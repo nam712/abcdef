@@ -9,6 +9,7 @@ namespace YourShopManagement.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Tags("🏢 Supplier Management")]
+    [AllowAnonymous]
     /// <summary>
     /// API quản lý nhà cung cấp - CRUD operations cho danh sách nhà cung cấp
     /// </summary>
