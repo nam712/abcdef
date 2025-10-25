@@ -7,10 +7,19 @@ using System.Text;
 using YourShopManagement.API.Data;
 using YourShopManagement.API.Helpers;
 using YourShopManagement.API.Services;
+using Backend.Models.Momo;
+using Backend.Services.Momo;
+using Backend.Repositories;
+using Backend.Services;
+using YourShopManagement.API.Repositories;
+using Backend.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ==================== 1. ADD SERVICES ====================
+//Momo API Payment
+builder.Services.Configure<MomoOptionModel>(builder.Configuration.GetSection("MomoAPI"));
+builder.Services.AddScoped<IMomoService, MomoService>();
 
 // Add Controllers
 builder.Services.AddControllers();
@@ -90,7 +99,7 @@ builder.Services.AddCors(options =>
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
-
+builder.Services.AddAutoMapper(typeof(EntityMappingProfile));
 // Helpers
 builder.Services.AddScoped<JwtHelper>();
 
@@ -100,12 +109,22 @@ builder.Services.AddScoped<YourShopManagement.API.Repositories.ICustomerReposito
 builder.Services.AddScoped<YourShopManagement.API.Repositories.IProductRepository, YourShopManagement.API.Repositories.ProductRepository>();
 builder.Services.AddScoped<YourShopManagement.API.Repositories.IProductCategoryRepository, YourShopManagement.API.Repositories.ProductCategoryRepository>();
 
+
 // Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
+
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+
+builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
+builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
 
 // ==================== 5. SWAGGER ====================
 builder.Services.AddEndpointsApiExplorer();
@@ -115,7 +134,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Shop Management API",
         Version = "v1",
-        Description = "API qu?n l� c?a h�ng v?i JWT Authentication",
+        Description = "API quan ly cua hang v?i JWT Authentication",
         Contact = new OpenApiContact
         {
             Name = "Your Name",
@@ -150,7 +169,16 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin()     // Cho phép mọi domain
+                  .AllowAnyHeader()     // Cho phép mọi header
+                  .AllowAnyMethod();    // Cho phép mọi phương thức (GET, POST, PUT, DELETE...)
+        });
+});
 // ==================== BUILD APP ====================
 var app = builder.Build();
 
@@ -160,7 +188,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseCors("AllowAll");
 // ⚠️ IMPORTANT: CORS phải đặt trước UseAuthentication
 app.UseCors("AllowAngular");
 

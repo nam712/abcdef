@@ -1,34 +1,31 @@
-﻿
+﻿// PaymentMethod entity class for EF Core mapping to payment_methods table
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using YourShopManagement.API.Models;
 
-namespace YourShopManagement.API.Models
+namespace Backend.Models
 {
-    /// <summary>
-    /// Bảng quản lý các phương thức thanh toán
-    /// </summary>
+
     [Table("payment_methods")]
     public class PaymentMethod
     {
         [Key]
         [Column("payment_method_id")]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int PaymentMethodId { get; set; }
 
-        [Required(ErrorMessage = "Tên phương thức thanh toán không được để trống")]
-        [MaxLength(100)]
+        [Required]
         [Column("method_name")]
-        public string MethodName { get; set; } = string.Empty;
+        [MaxLength(100)]
+        public string MethodName { get; set; }
 
-        [Required(ErrorMessage = "Mã phương thức thanh toán không được để trống")]
-        [MaxLength(50)]
+        [Required]
         [Column("method_code")]
-        public string MethodCode { get; set; } = string.Empty;
+        [MaxLength(50)]
+        public string MethodCode { get; set; }
 
         [Column("description")]
-        public string? Description { get; set; }
+        public string Description { get; set; }
 
         [Required]
         [Column("is_active")]
@@ -36,13 +33,13 @@ namespace YourShopManagement.API.Models
 
         [Required]
         [Column("created_at")]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
 
         [Required]
         [Column("updated_at")]
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; }
 
-        // Navigation Properties
         public virtual ICollection<Invoice>? Invoices { get; set; }
+
     }
 }

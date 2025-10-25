@@ -1,4 +1,5 @@
 ﻿
+using Backend.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -71,10 +72,10 @@ namespace YourShopManagement.API.Models
         public virtual Customer Customer { get; set; } = null!;
 
         [ForeignKey("EmployeeId")]
-        public virtual Employee? Employee { get; set; }
+        public virtual Employee Employee { get; set; }
 
         [ForeignKey("PaymentMethodId")]
-        public virtual PaymentMethod? PaymentMethod { get; set; }
+        public virtual PaymentMethod PaymentMethod { get; set; }
 
         public virtual ICollection<InvoiceDetail>? InvoiceDetails { get; set; }
     }

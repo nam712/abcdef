@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Backend.Models;
+using Microsoft.EntityFrameworkCore;
 using YourShopManagement.API.Models;
 
 namespace YourShopManagement.API.Data
@@ -19,11 +20,12 @@ namespace YourShopManagement.API.Data
         public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
         public DbSet<PurchaseOrderDetail> PurchaseOrderDetails { get; set; }
         public DbSet<PriceHistory> PriceHistories { get; set; }
-        public DbSet<PaymentMethod> PaymentMethods { get; set; }
-        public DbSet<Customer> Customers { get; set; }
-        public DbSet<Employee> Employees { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceDetail> InvoiceDetails { get; set; }
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<Employee> Employees { get; set; }
+        public DbSet<PaymentMethod> PaymentMethods { get; set; }
+        public DbSet<MomoInfo> MomoInfos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -371,6 +373,25 @@ namespace YourShopManagement.API.Data
                 entity.HasOne(e => e.Product)
                     .WithMany(p => p.InvoiceDetails)
                     .HasForeignKey(e => e.ProductId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+            // Cấu hình MomoInfo
+            modelBuilder.Entity<MomoInfo>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.OrderId).IsRequired();
+                entity.Property(e => e.OrderInfo).IsRequired();
+                entity.Property(e => e.PaymentMethodId).IsRequired();
+                entity.Property(e => e.DatePaid)
+                    .HasConversion(
+                        v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                        v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null
+                    );
+
+                // Cấu hình foreign key relationship
+                entity.HasOne(m => m.PaymentMethod)
+                    .WithMany()
+                    .HasForeignKey(m => m.PaymentMethodId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }
