@@ -72,7 +72,7 @@ namespace YourShopManagement.API.Services
                     SupplierId = supplier.SupplierId,
                     SupplierCode = supplier.SupplierCode,
                     SupplierName = supplier.SupplierName,
-                    ContactPerson = supplier.ContactPerson,
+                    ContactPerson = supplier.ContactName,
                     Phone = supplier.Phone,
                     Email = supplier.Email,
                     Address = supplier.Address,
@@ -121,7 +121,7 @@ namespace YourShopManagement.API.Services
                 {
                     SupplierCode = dto.SupplierCode,
                     SupplierName = dto.SupplierName,
-                    ContactPerson = dto.ContactPerson,
+                    ContactName = dto.ContactPerson,
                     Phone = dto.Phone,
                     Email = dto.Email,
                     Address = dto.Address,
@@ -144,7 +144,7 @@ namespace YourShopManagement.API.Services
                     SupplierId = supplier.SupplierId,
                     SupplierCode = supplier.SupplierCode,
                     SupplierName = supplier.SupplierName,
-                    ContactPerson = supplier.ContactPerson,
+                    ContactPerson = supplier.ContactName,
                     Phone = supplier.Phone,
                     Email = supplier.Email,
                     Address = supplier.Address,
@@ -200,7 +200,7 @@ namespace YourShopManagement.API.Services
                 // Cập nhật thông tin
                 supplier.SupplierCode = dto.SupplierCode;
                 supplier.SupplierName = dto.SupplierName;
-                supplier.ContactPerson = dto.ContactPerson;
+                supplier.ContactName = dto.ContactPerson;
                 supplier.Phone = dto.Phone;
                 supplier.Email = dto.Email;
                 supplier.Address = dto.Address;
@@ -220,7 +220,7 @@ namespace YourShopManagement.API.Services
                     SupplierId = supplier.SupplierId,
                     SupplierCode = supplier.SupplierCode,
                     SupplierName = supplier.SupplierName,
-                    ContactPerson = supplier.ContactPerson,
+                    ContactPerson = supplier.ContactName,
                     Phone = supplier.Phone,
                     Email = supplier.Email,
                     Address = supplier.Address,
@@ -308,7 +308,7 @@ namespace YourShopManagement.API.Services
 
                 if (!string.IsNullOrEmpty(searchDto.ContactPerson))
                 {
-                    query = query.Where(s => s.ContactPerson != null && s.ContactPerson.Contains(searchDto.ContactPerson));
+                    query = query.Where(s => s.ContactName != null && s.ContactName.Contains(searchDto.ContactPerson));
                 }
 
                 var totalCount = await query.CountAsync();
@@ -322,7 +322,7 @@ namespace YourShopManagement.API.Services
                         SupplierId = s.SupplierId,
                         SupplierCode = s.SupplierCode,
                         SupplierName = s.SupplierName,
-                        ContactPerson = s.ContactPerson,
+                        ContactPerson = s.ContactName,
                         Phone = s.Phone,
                         Email = s.Email,
                         Address = s.Address,

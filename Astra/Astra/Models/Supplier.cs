@@ -28,8 +28,8 @@ namespace YourShopManagement.API.Models
         public string SupplierName { get; set; } = string.Empty;
 
         [MaxLength(255)]
-        [Column("contact_person")]
-        public string? ContactPerson { get; set; }
+        [Column("contact_name")]
+        public string? ContactName { get; set; }
 
         [MaxLength(20)]
         [Column("phone")]

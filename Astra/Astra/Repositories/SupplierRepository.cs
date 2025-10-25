@@ -103,7 +103,7 @@ namespace YourShopManagement.API.Repositories
 
             if (!string.IsNullOrEmpty(contactPerson))
             {
-                query = query.Where(s => s.ContactPerson != null && s.ContactPerson.Contains(contactPerson));
+                query = query.Where(s => s.ContactName != null && s.ContactName.Contains(contactPerson));
             }
 
             var totalCount = await query.CountAsync();

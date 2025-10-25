@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Services;
 using System.Text;
 using YourShopManagement.API.Data;
 using YourShopManagement.API.Helpers;
@@ -95,10 +96,16 @@ builder.Services.AddScoped<JwtHelper>();
 
 // Repositories
 builder.Services.AddScoped<YourShopManagement.API.Repositories.ISupplierRepository, YourShopManagement.API.Repositories.SupplierRepository>();
+builder.Services.AddScoped<YourShopManagement.API.Repositories.ICustomerRepository, YourShopManagement.API.Repositories.CustomerRepository>();
+builder.Services.AddScoped<YourShopManagement.API.Repositories.IProductRepository, YourShopManagement.API.Repositories.ProductRepository>();
+builder.Services.AddScoped<YourShopManagement.API.Repositories.IProductCategoryRepository, YourShopManagement.API.Repositories.ProductCategoryRepository>();
 
 // Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 
 // ==================== 5. SWAGGER ====================
 builder.Services.AddEndpointsApiExplorer();

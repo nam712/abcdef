@@ -44,8 +44,7 @@ namespace YourShopManagement.API.Models
         // Navigation Properties
         [ForeignKey("ParentCategoryId")]
         public virtual ProductCategory? ParentCategory { get; set; }
-
-        public virtual ICollection<ProductCategory>? ChildCategories { get; set; }
+        public virtual ICollection<ProductCategory>? Children { get; set; }
         public virtual ICollection<Product>? Products { get; set; }
     }
 }

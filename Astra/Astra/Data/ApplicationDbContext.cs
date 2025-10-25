@@ -43,6 +43,7 @@ namespace YourShopManagement.API.Data
             });
 
             // ==================== 2. SHOP OWNER ====================
+
             modelBuilder.Entity<ShopOwner>(entity =>
             {
                 entity.HasKey(e => e.ShopOwnerId);
@@ -70,81 +71,87 @@ namespace YourShopManagement.API.Data
             });
 
             // ==================== 3. SUPPLIER ====================
-            modelBuilder.Entity<Supplier>(entity =>
+            modelBuilder.Entity<Supplier>(b =>
             {
-                entity.HasKey(e => e.SupplierId);
+                b.ToTable("suppliers");
 
-                entity.Property(e => e.SupplierCode).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.SupplierName).IsRequired().HasMaxLength(255);
-                entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue("active");
-                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-                entity.Property(e => e.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                // Indexes
-                entity.HasIndex(e => e.SupplierCode).IsUnique();
-                entity.HasIndex(e => e.SupplierName);
-                entity.HasIndex(e => e.Status);
-                entity.HasIndex(e => e.Phone);
+                b.HasKey(x => x.SupplierId);
+                b.Property(x => x.SupplierId).HasColumnName("supplier_id");
+                b.Property(x => x.SupplierCode).HasColumnName("supplier_code").IsRequired().HasMaxLength(50);
+                b.Property(x => x.SupplierName).HasColumnName("supplier_name").IsRequired().HasMaxLength(255);
+                b.Property(x => x.Address).HasColumnName("address");
+                b.Property(x => x.Phone).HasColumnName("phone").HasMaxLength(20);
+                b.Property(x => x.Email).HasColumnName("email").HasMaxLength(100);
+                b.Property(x => x.TaxCode).HasColumnName("tax_code").HasMaxLength(50);
+                b.Property(x => x.ContactName).HasColumnName("contact_person").HasMaxLength(100);
+                b.Property(x => x.BankAccount).HasColumnName("bank_account").HasMaxLength(50);
+                b.Property(x => x.BankName).HasColumnName("bank_name").HasMaxLength(100);
+                b.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).HasDefaultValue("active");
+                b.Property(x => x.Notes).HasColumnName("notes");
+                b.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
+                b.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
 
-            // ==================== 4. PRODUCT CATEGORY ====================
-            modelBuilder.Entity<ProductCategory>(entity =>
+            // ========================= PRODUCT CATEGORIES =========================
+            modelBuilder.Entity<ProductCategory>(b =>
             {
-                entity.HasKey(e => e.CategoryId);
+                b.ToTable("product_categories");
 
-                entity.Property(e => e.CategoryName).IsRequired().HasMaxLength(255);
-                entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue("active");
-                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-                entity.Property(e => e.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+                b.HasKey(x => x.CategoryId);
+                b.Property(x => x.CategoryId).HasColumnName("category_id");
+                b.Property(x => x.CategoryName).HasColumnName("category_name").IsRequired().HasMaxLength(255);
+                b.Property(x => x.Description).HasColumnName("description");
+                b.Property(x => x.ParentCategoryId).HasColumnName("parent_category_id");
+                b.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).HasDefaultValue("active");
+                b.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
+                b.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                // Indexes
-                entity.HasIndex(e => e.CategoryName).IsUnique();
-
-                // Self-referencing relationship (Parent-Child categories)
-                entity.HasOne(e => e.ParentCategory)
-                    .WithMany(c => c.ChildCategories)
-                    .HasForeignKey(e => e.ParentCategoryId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                // Self reference
+                b.HasOne(x => x.ParentCategory)
+                 .WithMany(x => x.Children)
+                 .HasForeignKey(x => x.ParentCategoryId)
+                 .OnDelete(DeleteBehavior.SetNull);
             });
 
-            // ==================== 5. PRODUCT ====================
-            modelBuilder.Entity<Product>(entity =>
+
+            // ========================= PRODUCTS =========================
+            modelBuilder.Entity<Product>(b =>
             {
-                entity.HasKey(e => e.ProductId);
+                b.ToTable("products");
 
-                entity.Property(e => e.ProductCode).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.ProductName).IsRequired().HasMaxLength(255);
-                entity.Property(e => e.Price).IsRequired().HasColumnType("decimal(18,2)");
-                entity.Property(e => e.CostPrice).HasColumnType("decimal(18,2)");
-                entity.Property(e => e.Stock).IsRequired().HasDefaultValue(0);
-                entity.Property(e => e.MinStock).HasDefaultValue(0);
-                entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue("active");
-                entity.Property(e => e.Weight).HasColumnType("decimal(10,2)");
-                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-                entity.Property(e => e.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+                b.HasKey(x => x.ProductId);
+                b.Property(x => x.ProductId).HasColumnName("product_id");
+                b.Property(x => x.ProductCode).HasColumnName("product_code").IsRequired().HasMaxLength(50);
+                b.Property(x => x.ProductName).HasColumnName("product_name").IsRequired().HasMaxLength(255);
+                b.Property(x => x.Description).HasColumnName("description");
+                b.Property(x => x.CategoryId).HasColumnName("category_id");
+                b.Property(x => x.Brand).HasColumnName("brand").HasMaxLength(100);
+                b.Property(x => x.SupplierId).HasColumnName("supplier_id");
+                b.Property(x => x.Price).HasColumnName("price").HasPrecision(18, 2);
+                b.Property(x => x.CostPrice).HasColumnName("cost_price").HasPrecision(18, 2);
+                b.Property(x => x.Stock).HasColumnName("stock");
+                b.Property(x => x.MinStock).HasColumnName("min_stock");
+                b.Property(x => x.Sku).HasColumnName("sku").HasMaxLength(50);
+                b.Property(x => x.Barcode).HasColumnName("barcode").HasMaxLength(50);
+                b.Property(x => x.Unit).HasColumnName("unit").HasMaxLength(20);
+                b.Property(x => x.ImageUrl).HasColumnName("image_url");
+                b.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).HasDefaultValue("active");
+                b.Property(x => x.Weight).HasColumnName("weight");
+                b.Property(x => x.Dimension).HasColumnName("dimension").HasMaxLength(100);
+                b.Property(x => x.Notes).HasColumnName("notes");
+                b.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
+                b.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                // Indexes
-                entity.HasIndex(e => e.ProductCode).IsUnique();
-                entity.HasIndex(e => e.ProductName);
-                entity.HasIndex(e => e.Status);
-                entity.HasIndex(e => e.CategoryId);
-                entity.HasIndex(e => e.Brand);
-                entity.HasIndex(e => e.SupplierId);
-                entity.HasIndex(e => e.Sku).IsUnique();
-                entity.HasIndex(e => e.Barcode).IsUnique();
+                b.HasOne(x => x.Supplier)
+                 .WithMany(s => s.Products)
+                 .HasForeignKey(x => x.SupplierId)
+                 .OnDelete(DeleteBehavior.SetNull);
 
-                // Relationships
-                entity.HasOne(e => e.Supplier)
-                    .WithMany(s => s.Products)
-                    .HasForeignKey(e => e.SupplierId)
-                    .OnDelete(DeleteBehavior.SetNull);
-
-                entity.HasOne(e => e.Category)
-                    .WithMany(c => c.Products)
-                    .HasForeignKey(e => e.CategoryId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                b.HasOne(x => x.Category)
+                 .WithMany(c => c.Products)
+                 .HasForeignKey(x => x.CategoryId)
+                 .OnDelete(DeleteBehavior.SetNull);
             });
-
             // ==================== 6. PURCHASE ORDER ====================
             modelBuilder.Entity<PurchaseOrder>(entity =>
             {
