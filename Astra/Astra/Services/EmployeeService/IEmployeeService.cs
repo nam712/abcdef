@@ -5,8 +5,6 @@ using Backend.DTOs;
 
 namespace Backend.Services
 {
-
-
     public interface IEmployeeService
     {
         Task<EmployeeDto> GetByIdAsync(int employeeId);
@@ -18,6 +16,8 @@ namespace Backend.Services
         Task<IEnumerable<EmployeeDto>> SearchAsync(string keyword);
         Task<IEnumerable<EmployeeDto>> GetByDepartmentAsync(string department);
         Task<IEnumerable<EmployeeDto>> GetByWorkStatusAsync(string workStatus);
+        Task<EmployeeDto> AddOrUpdateWithAvatarAsync(EmployeeDto dto);
+        Task DeleteAvatarAsync(int employeeId);
     }
 
 

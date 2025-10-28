@@ -169,18 +169,12 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll",
-        policy =>
-        {
-            policy.AllowAnyOrigin()     // Cho phép mọi domain
-                  .AllowAnyHeader()     // Cho phép mọi header
-                  .AllowAnyMethod();    // Cho phép mọi phương thức (GET, POST, PUT, DELETE...)
-        });
-});
+
+
 // ==================== BUILD APP ====================
 var app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -188,9 +182,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseCors("AllowAll");
 // ⚠️ IMPORTANT: CORS phải đặt trước UseAuthentication
 app.UseCors("AllowAngular");
+
+// ✅ Cho phép truy cập ảnh trong wwwroot
+app.UseStaticFiles();
 
 // Tạm thời tắt HTTPS redirect để test
 // app.UseHttpsRedirection();

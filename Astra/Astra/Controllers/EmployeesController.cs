@@ -120,5 +120,33 @@ namespace Backend.Controllers
                 return StatusCode(500, new { message = "Lỗi khi xóa nhân viên", detail = ex.Message });
             }
         }
+        [HttpPost("upload")]
+        public async Task<ActionResult<EmployeeDto>> UploadEmployee([FromForm] EmployeeDto employeeDto)
+        {
+            try
+            {
+                var created = await _service.AddOrUpdateWithAvatarAsync(employeeDto);
+                return Ok(created);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi upload ảnh nhân viên", detail = ex.Message });
+            }
+        }
+
+        // Delete avatar file
+        [HttpDelete("{id}/avatar")]
+        public async Task<IActionResult> DeleteAvatar(int id)
+        {
+            try
+            {
+                await _service.DeleteAvatarAsync(id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi xóa ảnh nhân viên", detail = ex.Message });
+            }
+        }
     }
 }

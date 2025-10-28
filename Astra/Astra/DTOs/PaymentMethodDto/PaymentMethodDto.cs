@@ -3,8 +3,6 @@ using System;
 
 namespace Backend.DTOs
 {
-
-
     public class PaymentMethodDto
     {
         public int PaymentMethodId { get; set; }

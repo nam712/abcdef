@@ -6,53 +6,58 @@ using YourShopManagement.API.Models;
 
 namespace Backend.Models
 {
+    /// <summary>
+    /// Bảng nhân viên
+    /// Constraint: Nếu có username thì bắt buộc phải có password
+    /// </summary>
     [Table("employees")]
     public class Employee
     {
         [Key]
         [Column("employee_id")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int EmployeeId { get; set; }
 
-        [Required]
-        [Column("employee_code")]
+        [Required(ErrorMessage = "Mã nhân viên không được để trống")]
         [MaxLength(50)]
-        public string EmployeeCode { get; set; }
+        [Column("employee_code")]
+        public string EmployeeCode { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Tên nhân viên không được để trống")]
+        [MaxLength(255)]
         [Column("employee_name")]
-        [MaxLength(255)]
-        public string EmployeeName { get; set; }
+        public string EmployeeName { get; set; } = string.Empty;
 
-        [Column("phone")]
         [MaxLength(20)]
-        public string Phone { get; set; }
+        [Column("phone")]
+        public string? Phone { get; set; }
 
-        [Column("email")]
         [MaxLength(100)]
-        public string Email { get; set; }
+        [Column("email")]
+        public string? Email { get; set; }
 
-        [Column("address")]
         [MaxLength(255)]
-        public string Address { get; set; }
+        [Column("address")]
+        public string? Address { get; set; }
 
         [Column("date_of_birth")]
         public DateTime? DateOfBirth { get; set; }
 
-        [Column("gender")]
         [MaxLength(10)]
-        public string Gender { get; set; }
+        [Column("gender")]
+        public string? Gender { get; set; }
 
-        [Column("id_card")]
         [MaxLength(20)]
-        public string IdCard { get; set; }
+        [Column("id_card")]
+        public string? IdCard { get; set; }
 
+        [MaxLength(100)]
         [Column("position")]
-        [MaxLength(100)]
-        public string Position { get; set; }
+        public string? Position { get; set; }
 
-        [Column("department")]
         [MaxLength(100)]
-        public string Department { get; set; }
+        [Column("department")]
+        public string? Department { get; set; }
 
         [Required]
         [Column("hire_date")]
@@ -61,51 +66,63 @@ namespace Backend.Models
         [Column("salary", TypeName = "decimal(18,2)")]
         public decimal? Salary { get; set; }
 
-        [Column("salary_type")]
         [MaxLength(20)]
-        public string SalaryType { get; set; }
+        [Column("salary_type")]
+        public string? SalaryType { get; set; }
 
+        [MaxLength(100)]
         [Column("bank_account")]
-        [MaxLength(100)]
-        public string BankAccount { get; set; }
+        public string? BankAccount { get; set; }
 
+        [MaxLength(255)]
         [Column("bank_name")]
-        [MaxLength(255)]
-        public string BankName { get; set; }
+        public string? BankName { get; set; }
 
-        [Column("username")]
         [MaxLength(100)]
-        public string Username { get; set; }
+        [Column("username")]
+        public string? Username { get; set; }
 
+        [MaxLength(255)]
         [Column("password")]
-        [MaxLength(255)]
-        public string Password { get; set; }
+        public string? Password { get; set; }
 
+        [MaxLength(255)]
         [Column("permissions")]
-        [MaxLength(255)]
-        public string Permissions { get; set; }
+        public string? Permissions { get; set; }
 
-        [Column("avatar_url")]
         [MaxLength(255)]
-        public string AvatarUrl { get; set; }
+        [Column("avatar_url")]
+        public string? AvatarUrl { get; set; }
 
         [Required]
-        [Column("work_status")]
         [MaxLength(20)]
+        [Column("work_status")]
         public string WorkStatus { get; set; } = "active";
 
         [Column("notes")]
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
 
         [Required]
         [Column("created_at")]
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [Required]
         [Column("updated_at")]
-        public DateTime UpdatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+        // Navigation Properties
         public virtual ICollection<Invoice>? Invoices { get; set; }
+        /// <summary>
+        /// Validation: Nếu có Username thì bắt buộc phải có Password
+        /// </summary>
+        public bool IsValid()
+        {
+            if (!string.IsNullOrEmpty(Username) && string.IsNullOrEmpty(Password))
+            {
+                return false;
+            }
+            return true;
+        }
     }
 
 
