@@ -54,10 +54,14 @@ namespace Backend.Repositories
 
         public async Task<IEnumerable<Employee>> SearchAsync(string keyword)
         {
+            if (string.IsNullOrWhiteSpace(keyword))
+                return await _context.Employees.ToListAsync();
+
+            var lowerKeyword = keyword.ToLower();
             return await _context.Employees
-                .Where(e => e.EmployeeName.Contains(keyword) ||
-                            e.EmployeeCode.Contains(keyword) ||
-                            e.Email.Contains(keyword))
+                .Where(e => e.EmployeeName.ToLower().Contains(lowerKeyword) ||
+                            e.EmployeeCode.ToLower().Contains(lowerKeyword) ||
+                            (e.Email != null && e.Email.ToLower().Contains(lowerKeyword)))
                 .ToListAsync();
         }
 

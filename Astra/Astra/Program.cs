@@ -125,6 +125,11 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
 builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
+builder.Services.AddScoped<YourShopManagement.API.Services.Interfaces.IInvoiceService, YourShopManagement.API.Services.InvoiceService.InvoiceService>();
+
+builder.Services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
+builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
+
 
 // ==================== 5. SWAGGER ====================
 builder.Services.AddEndpointsApiExplorer();
@@ -170,11 +175,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
 // ==================== BUILD APP ====================
 var app = builder.Build();
-
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

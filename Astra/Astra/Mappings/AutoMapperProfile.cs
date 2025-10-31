@@ -14,8 +14,7 @@ namespace Backend.Mappings
             //CreateMap<Customer, CustomerDto>();
             //CreateMap<CustomerDto, Customer>();
 
-            CreateMap<Employee, EmployeeDto>();
-            CreateMap<EmployeeDto, Employee>();
+            CreateMap<Employee, EmployeeDto>().ReverseMap();
 
             CreateMap<PaymentMethod, PaymentMethodDto>().ReverseMap();
         }
