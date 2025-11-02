@@ -2,12 +2,14 @@
 using YourShopManagement.API.DTOs.PurchaseOrder;
 using YourShopManagement.API.Services;
 using YourShopManagement.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization; 
 
 namespace YourShopManagement.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Tags("📦 Purchase Order Management")]
+    [Authorize(Roles = "ShopOwner")]
     public class PurchaseOrderController : ControllerBase
     {
         private readonly IPurchaseOrderService _service;

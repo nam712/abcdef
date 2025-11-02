@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -94,7 +93,16 @@ namespace YourShopManagement.API.Models
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation Properties
+        // 🔹 Thêm cột khóa ngoại đến chủ shop
+        [Required]
+        [Column("shop_owner_id")]
+        public int ShopOwnerId { get; set; }
+
+        // 🔹 Navigation Property
+        [ForeignKey("ShopOwnerId")]
+        public virtual ShopOwner ShopOwner { get; set; } = null!;
+
+        // Navigation Properties khác
         [ForeignKey("SupplierId")]
         public virtual Supplier? Supplier { get; set; }
 

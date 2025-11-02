@@ -3,7 +3,8 @@ import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
 import { provideRouter } from '@angular/router';
 import { routes } from './app/app.routes';
-import { provideHttpClient } from '@angular/common/http'; // 👈 Thêm import này
+import { HttpClientModule } from '@angular/common/http';
+import { importProvidersFrom } from '@angular/core';
 
 // Đây là hàm default export cho SSR
 export default function bootstrap() {
@@ -13,7 +14,6 @@ export default function bootstrap() {
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
-    provideHttpClient() // 👈 Thêm dòng này để cung cấp HttpClient
+    importProvidersFrom(HttpClientModule)
   ]
-})
-  .catch(err => console.error(err));
+});

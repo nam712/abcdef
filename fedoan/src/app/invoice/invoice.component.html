@@ -1,0 +1,383 @@
+<div class="invoice-container">
+  <!-- Header with Navigation -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <h1 class="logo">FeDoan</h1>
+        <button class="mobile-menu-toggle" (click)="toggleMobileMenu()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <nav class="main-nav" [class.mobile-open]="isMobileMenuOpen">
+          <a href="#" class="nav-link" (click)="navigateToDashboard(); $event.preventDefault()">Trang chủ</a>
+
+          <!-- Hàng hóa with submenu -->
+          <div class="nav-item dropdown"
+               (mouseenter)="openProductsSubmenu()"
+               (mouseleave)="closeProductsSubmenu()">
+            <button class="nav-link dropdown-toggle" type="button"
+                    (click)="toggleProductsSubmenu(); $event.stopPropagation()">
+              Hàng hóa <i class="fas fa-caret-down"></i>
+            </button>
+
+            <div class="submenu" [class.open]="productsSubmenuOpen" role="menu" [attr.aria-hidden]="!productsSubmenuOpen">
+              <a href="#" class="nav-link" (click)="navigateToProducts(); $event.preventDefault()">Danh sách Hàng hóa</a>
+              <a href="#" class="nav-link" (click)="navigateToStockIn(); $event.preventDefault()">Nhập kho</a>
+              <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
+              <a href="#" class="nav-link" (click)="navigateToStockOut(); $event.preventDefault()">Xuất kho</a>
+            </div>
+          </div>
+          <a class="nav-link" routerLink="/pos">Bán hàng</a>
+          <a href="#" class="nav-link" (click)="navigateToCustomers(); $event.preventDefault()">Khách hàng</a>
+          <a href="#" class="nav-link" (click)="navigateToEmployees(); $event.preventDefault()">Nhân viên</a>
+          <a href="#" class="nav-link" (click)="navigateToReports(); $event.preventDefault()">Báo cáo</a>
+          <a href="#" class="nav-link" (click)="navigateToManufacturer(); $event.preventDefault()">Nhà sản xuất</a>
+          <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
+        </nav>
+      </div>
+      
+      <div class="user-section">
+        <button class="theme-toggle" (click)="changeTheme()" title="Đổi theme">
+          <i class="fas fa-palette"></i>
+          <span>{{ getCurrentThemeLabel() }}</span>
+        </button>
+        
+        <app-notification-bell></app-notification-bell>
+        
+        <div class="user-profile">
+          <img [src]="currentUser.avatar" [alt]="currentUser.name" class="user-avatar">
+          <div class="user-info">
+            <span class="user-name">{{ currentUser.name }}</span>
+            <button class="logout-btn" (click)="logout()" title="Đăng xuất">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Đăng xuất</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-content">
+    <div class="content-layout">
+      <!-- Mobile Filter Toggle Button -->
+      <button class="mobile-filter-toggle" (click)="toggleFilters()" *ngIf="!showFilters">
+        <i class="fas fa-filter"></i>
+        <span>Bộ lọc</span>
+        <span class="filter-count" *ngIf="hasActiveFilters()">{{ getActiveFilterCount() }}</span>
+      </button>
+
+      <!-- Left Sidebar - Filters -->
+      <aside class="filters-sidebar" [class.mobile-show]="showFilters" style="margin-left: -10px;">
+        <div class="filters-header">
+          <h3><i class="fas fa-filter"></i> Bộ lọc</h3>
+          <div class="filters-header-actions">
+            <button class="btn-reset-filter" (click)="resetFilters()" title="Xóa bộ lọc">
+              <i class="fas fa-redo"></i>
+            </button>
+            <button class="btn-close-filter" (click)="toggleFilters()" title="Đóng">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filters-content">
+          <!-- Tìm kiếm -->
+          <div class="filter-group">
+            <label><i class="fas fa-search"></i> Tìm kiếm</label>
+            <input type="text" 
+                   class="filter-input" 
+                   [(ngModel)]="filters.searchText"
+                   (input)="applyFilters()"
+                   placeholder="Mã HĐ, khách hàng...">
+          </div>
+
+          <!-- Trạng thái thanh toán -->
+          <div class="filter-group">
+            <label><i class="fas fa-money-bill-wave"></i> Trạng thái TT</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.paymentStatus"
+                    (change)="applyFilters()">
+              <option value="">Tất cả</option>
+              <option value="paid">Đã thanh toán</option>
+              <option value="unpaid">Chưa thanh toán</option>
+              <option value="partial">Thanh toán 1 phần</option>
+              <option value="refunded">Đã hoàn tiền</option>
+            </select>
+          </div>
+
+          <!-- Từ ngày -->
+          <div class="filter-group">
+            <label><i class="fas fa-calendar-alt"></i> Từ ngày</label>
+            <input type="date" 
+                   class="filter-input" 
+                   [(ngModel)]="filters.dateFrom"
+                   (change)="applyFilters()">
+          </div>
+
+          <!-- Đến ngày -->
+          <div class="filter-group">
+            <label><i class="fas fa-calendar-alt"></i> Đến ngày</label>
+            <input type="date" 
+                   class="filter-input" 
+                   [(ngModel)]="filters.dateTo"
+                   (change)="applyFilters()">
+          </div>
+
+          <!-- Số tiền tối thiểu -->
+          <div class="filter-group">
+            <label><i class="fas fa-coins"></i> Số tiền từ</label>
+            <input type="number" 
+                   class="filter-input" 
+                   [(ngModel)]="filters.minAmount"
+                   (input)="applyFilters()"
+                   placeholder="0">
+          </div>
+
+          <!-- Số tiền tối đa -->
+          <div class="filter-group">
+            <label><i class="fas fa-coins"></i> Số tiền đến</label>
+            <input type="number" 
+                   class="filter-input" 
+                   [(ngModel)]="filters.maxAmount"
+                   (input)="applyFilters()"
+                   placeholder="999,999,999">
+          </div>
+
+          <!-- Sắp xếp -->
+          <div class="filter-group">
+            <label><i class="fas fa-sort"></i> Sắp xếp theo</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.sortBy"
+                    (change)="applyFilters()">
+              <option value="date-desc">Ngày mới nhất</option>
+              <option value="date-asc">Ngày cũ nhất</option>
+              <option value="amount-desc">Số tiền cao nhất</option>
+              <option value="amount-asc">Số tiền thấp nhất</option>
+              <option value="code-asc">Mã A-Z</option>
+              <option value="code-desc">Mã Z-A</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Summary -->
+        <div class="filter-summary">
+          <p><strong>{{ filteredInvoices.length }}</strong> / {{ invoices.length }} hóa đơn</p>
+        </div>
+      </aside>
+
+      <!-- Overlay for mobile filters -->
+      <div class="filters-overlay" 
+           [class.active]="showFilters" 
+           (click)="toggleFilters()"></div>
+
+      <!-- Right Content Area -->
+      <div class="content-area">
+        <div class="content-header">
+          <h2>Quản lý Hóa đơn</h2>
+          <button class="btn-add-new" (click)="openAddDialog()" [disabled]="isLoading">
+            <i class="fas fa-plus"></i>
+            <span>Thêm mới</span>
+          </button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-container" *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Đang tải dữ liệu...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" *ngIf="errorMessage && !isLoading">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Invoices Table -->
+        <div class="table-container" *ngIf="!isLoading">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã HĐ</th>
+                <th>Khách hàng</th>
+                <th>Nhân viên</th>
+                <th>Ngày tạo</th>
+                <th>Tổng tiền</th>
+                <th>Giảm giá</th>
+                <th>Thành tiền</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngIf="filteredInvoices && filteredInvoices.length > 0; else noData">
+                <tr *ngFor="let invoice of filteredInvoices; trackBy: trackByInvoiceId">
+                  <td><strong>{{ invoice.invoiceCode }}</strong></td>
+                  <td>{{ invoice.customerName || 'N/A' }}</td>
+                  <td>{{ invoice.employeeName || 'N/A' }}</td>
+                  <td>{{ formatDate(invoice.invoiceDate) }}</td>
+                  <td class="text-right">{{ formatCurrency(invoice.totalAmount) }}</td>
+                  <td class="text-right">{{ formatCurrency(invoice.discountAmount || 0) }}</td>
+                  <td class="text-right"><strong>{{ formatCurrency(invoice.finalAmount) }}</strong></td>
+                  <td>
+                    <span class="status-badge" [ngClass]="getPaymentStatusClass(invoice.paymentStatus)">
+                      {{ getPaymentStatusLabel(invoice.paymentStatus) }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-action btn-view" (click)="viewInvoice(invoice)" title="Xem chi tiết" [disabled]="isLoading">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="btn-action btn-edit" (click)="editInvoice(invoice)" title="Chỉnh sửa" [disabled]="isLoading">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn-action btn-delete" (click)="deleteInvoice(invoice)" title="Xóa" [disabled]="isLoading">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+              <ng-template #noData>
+                <tr>
+                  <td colspan="9" class="no-data">
+                    <i class="fas fa-inbox"></i>
+                    <p>{{ filters.searchText ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có dữ liệu hóa đơn' }}</p>
+                  </td>
+                </tr>
+              </ng-template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add/Edit Invoice Dialog -->
+  <div class="dialog-overlay" [class.active]="showDialog" (click)="closeDialog()">
+    <div class="dialog-container" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h3>{{ isEditMode ? 'Chỉnh sửa hóa đơn' : 'Thêm hóa đơn mới' }}</h3>
+        <button class="btn-close" (click)="closeDialog()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Error Message in Dialog -->
+      <div class="dialog-error" *ngIf="errorMessage">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <form class="dialog-form" (ngSubmit)="saveInvoice()">
+        <div class="form-grid">
+          <!-- Mã hóa đơn -->
+          <div class="form-group">
+            <label for="invoiceCode">Mã hóa đơn <span class="required">*</span></label>
+            <input type="text" id="invoiceCode" [(ngModel)]="currentInvoice.invoiceCode" 
+                   name="invoiceCode" placeholder="VD: INV24110001" required readonly>
+            <small class="form-hint">Mã sẽ được tạo tự động</small>
+          </div>
+
+          <!-- Khách hàng (chọn từ danh sách) -->
+          <div class="form-group">
+            <label for="customerId">Khách hàng <span class="required">*</span></label>
+            <div *ngIf="isLoadingCustomers">Đang tải danh sách khách hàng...</div>
+            <div *ngIf="!isLoadingCustomers">
+              <select id="customerId" [(ngModel)]="currentInvoice.customerId" name="customerId" required>
+                <option [ngValue]="0">-- Chọn khách hàng --</option>
+                <option *ngFor="let c of customers" [ngValue]="c.customerId">{{ c.customerName || c.customerCode }} </option>
+              </select>
+            </div>
+            <small class="form-hint" *ngIf="customersError">{{ customersError }}</small>
+          </div>
+
+          <!-- Nhân viên (chọn từ danh sách) -->
+          <div class="form-group">
+            <label for="employeeId">Nhân viên</label>
+            <div *ngIf="isLoadingEmployees">Đang tải danh sách nhân viên...</div>
+            <div *ngIf="!isLoadingEmployees">
+              <select id="employeeId" [(ngModel)]="currentInvoice.employeeId" name="employeeId">
+                <option [ngValue]="null">-- Không chọn --</option>
+                <option *ngFor="let e of employees" [ngValue]="e.employeeId">{{ e.employeeName }}</option>
+              </select>
+            </div>
+            <small class="form-hint" *ngIf="employeesError">{{ employeesError }}</small>
+          </div>
+
+          <!-- Ngày tạo -->
+          <div class="form-group">
+            <label for="invoiceDate">Ngày tạo <span class="required">*</span></label>
+            <input type="date" id="invoiceDate" [(ngModel)]="currentInvoice.invoiceDate" 
+                   name="invoiceDate" required>
+          </div>
+
+          <!-- Tổng tiền -->
+          <div class="form-group">
+            <label for="totalAmount">Tổng tiền <span class="required">*</span></label>
+            <input type="number" id="totalAmount" [(ngModel)]="currentInvoice.totalAmount" 
+                   name="totalAmount" placeholder="0" required min="0" step="1000">
+          </div>
+
+          <!-- Giảm giá -->
+          <div class="form-group">
+            <label for="discountAmount">Giảm giá</label>
+            <input type="number" id="discountAmount" [(ngModel)]="currentInvoice.discountAmount" 
+                   name="discountAmount" placeholder="0" min="0" step="1000">
+          </div>
+
+          <!-- Thành tiền -->
+          <div class="form-group">
+            <label for="finalAmount">Thành tiền <span class="required">*</span></label>
+            <input type="number" id="finalAmount" [(ngModel)]="currentInvoice.finalAmount" 
+                   name="finalAmount" placeholder="0" required min="0" step="1000">
+          </div>
+
+          <!-- Đã thanh toán -->
+          <div class="form-group">
+            <label for="amountPaid">Đã thanh toán</label>
+            <input type="number" id="amountPaid" [(ngModel)]="currentInvoice.amountPaid" 
+                   name="amountPaid" placeholder="0" min="0" step="1000">
+          </div>
+
+          <!-- Phương thức thanh toán -->
+          <div class="form-group">
+            <label for="paymentMethodId">ID Phương thức TT</label>
+            <input type="number" id="paymentMethodId" [(ngModel)]="currentInvoice.paymentMethodId" 
+                   name="paymentMethodId" placeholder="Nhập ID phương thức" min="1">
+          </div>
+
+          <!-- Trạng thái thanh toán -->
+          <div class="form-group">
+            <label for="paymentStatus">Trạng thái TT <span class="required">*</span></label>
+            <select id="paymentStatus" [(ngModel)]="currentInvoice.paymentStatus" name="paymentStatus" required>
+              <option value="unpaid">Chưa thanh toán</option>
+              <option value="paid">Đã thanh toán</option>
+              <option value="partial">Thanh toán 1 phần</option>
+              <option value="refunded">Đã hoàn tiền</option>
+            </select>
+          </div>
+
+          <!-- Ghi chú -->
+          <div class="form-group full-width">
+            <label for="notes">Ghi chú</label>
+            <textarea id="notes" [(ngModel)]="currentInvoice.notes" 
+                      name="notes" rows="3" placeholder="Nhập ghi chú (nếu có)"></textarea>
+          </div>
+        </div>
+
+        <div class="dialog-footer">
+          <button type="button" class="btn-cancel" (click)="closeDialog()" [disabled]="isLoading">
+            <i class="fas fa-times"></i>
+            Hủy
+          </button>
+          <button type="submit" class="btn-save" [disabled]="isLoading">
+            <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{ isLoading ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Thêm mới') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

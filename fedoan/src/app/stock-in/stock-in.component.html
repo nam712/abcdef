@@ -1,0 +1,208 @@
+<div class="stock-in-container">
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <h1 class="logo">FeDoan</h1>
+        <button class="mobile-menu-toggle" (click)="toggleMobileMenu()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <nav class="main-nav" [class.mobile-open]="isMobileMenuOpen">
+          <a href="#" class="nav-link" (click)="navigateToDashboard(); $event.preventDefault()">Trang chủ</a>
+
+          <!-- Hàng hóa with submenu -->
+          <div class="nav-item dropdown"
+               (mouseenter)="openProductsSubmenu()"
+               (mouseleave)="closeProductsSubmenu()">
+            <button class="nav-link dropdown-toggle" type="button"
+                    (click)="toggleProductsSubmenu(); $event.stopPropagation()">
+              Hàng hóa <i class="fas fa-caret-down"></i>
+            </button>
+
+            <div class="submenu" [class.open]="productsSubmenuOpen" role="menu" [attr.aria-hidden]="!productsSubmenuOpen">
+              <a href="#" class="nav-link" (click)="navigateToProducts(); $event.preventDefault()">Danh sách Hàng hóa</a>
+              <a href="#" class="nav-link" (click)="navigateToStockIn(); $event.preventDefault()">Nhập kho</a>
+              <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
+              <a href="#" class="nav-link" (click)="navigateToStockOut(); $event.preventDefault()">Xuất kho</a>
+            </div>
+          </div>
+
+          <a class="nav-link" routerLink="/pos">Bán hàng</a>
+          <a href="#" class="nav-link" (click)="navigateToCustomers(); $event.preventDefault()">Khách hàng</a>
+          <a href="#" class="nav-link" (click)="navigateToEmployees(); $event.preventDefault()">Nhân viên</a>
+          <a href="#" class="nav-link" (click)="navigateToReports(); $event.preventDefault()">Báo cáo</a>
+          <a href="#" class="nav-link" (click)="navigateToManufacturer(); $event.preventDefault()">Nhà sản xuất</a>
+          <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-content">
+    <div class="content-layout">
+      <button class="mobile-filter-toggle" (click)="toggleFilters()" *ngIf="!showFilters">
+        <i class="fas fa-filter"></i>
+        <span>Bộ lọc</span>
+        <span class="filter-count" *ngIf="hasActiveFilters()">{{ getActiveFilterCount() }}</span>
+      </button>
+
+      <!-- Left Sidebar - Filters -->
+      <aside class="filters-sidebar" [class.mobile-show]="showFilters" style="margin-left: -10px;">
+        <div class="filters-header">
+          <h3><i class="fas fa-filter"></i> Bộ lọc</h3>
+          <div class="filters-header-actions">
+            <button class="btn-reset-filter" (click)="resetFilters()" title="Xóa bộ lọc">
+              <i class="fas fa-redo"></i>
+            </button>
+            <button class="btn-close-filter" (click)="toggleFilters()" title="Đóng">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filters-content">
+          <div class="filter-group">
+            <label><i class="fas fa-search"></i> Tìm kiếm</label>
+            <input type="text" class="filter-input" [(ngModel)]="filters.searchText" (input)="applyFilters()" placeholder="Mã, nhà cung cấp...">
+          </div>
+
+          <div class="filter-group">
+            <label><i class="fas fa-map-marker-alt"></i> Nhà cung cấp</label>
+            <select class="filter-select" [(ngModel)]="filters.supplier" (change)="applyFilters()">
+              <option value="">Tất cả</option>
+              <option *ngFor="let s of suppliers" [value]="s.supplierName || s.name">{{ s.supplierName || s.name }}</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label><i class="fas fa-toggle-on"></i> Trạng thái</label>
+            <select class="filter-select" [(ngModel)]="filters.status" (change)="applyFilters()">
+              <option value="">Tất cả</option>
+              <option value="Hoàn tất">Hoàn tất</option>
+              <option value="Đang xử lý">Đang xử lý</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label><i class="fas fa-calendar-alt"></i> Từ ngày</label>
+            <input type="date" class="filter-input" [(ngModel)]="filters.dateFrom" (change)="applyFilters()">
+          </div>
+
+          <div class="filter-group">
+            <label><i class="fas fa-calendar-alt"></i> Đến ngày</label>
+            <input type="date" class="filter-input" [(ngModel)]="filters.dateTo" (change)="applyFilters()">
+          </div>
+
+          <div class="filter-group">
+            <label><i class="fas fa-sort"></i> Sắp xếp theo</label>
+            <select class="filter-select" [(ngModel)]="filters.sortBy" (change)="applyFilters()">
+              <option value="date-desc">Ngày (mới nhất)</option>
+              <option value="date-asc">Ngày (cũ nhất)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-summary">
+          <p><strong>{{ filtered.length }}</strong> / {{ stockIns.length }} phiếu nhập</p>
+        </div>
+      </aside>
+
+      <div class="filters-overlay" [class.active]="showFilters" (click)="toggleFilters()"></div>
+
+      <div class="content-area">
+        <div class="content-header">
+          <h2>Nhập kho</h2>
+          <button class="btn-add-new" (click)="openAddDialog()">Thêm phiếu nhập</button>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã</th>
+                <th>Ngày</th>
+                <th>Nhà cung cấp</th>
+                <th>Tổng</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of filtered">
+                <td>{{ item.code }}</td>
+                <td>{{ item.date }}</td>
+                <td>{{ item.supplier }}</td>
+                <td>{{ item.total | number:'1.0-0' }} ₫</td>
+                <td>Hoàn tất</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Create Purchase Order Dialog -->
+    <div class="modal-backdrop" *ngIf="showDialog">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3>Thêm phiếu nhập kho</h3>
+          <button class="close" (click)="closeDialog()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <label>Nhà cung cấp</label>
+            <select [(ngModel)]="newPo.supplierId">
+              <option [ngValue]="null">-- Chọn nhà cung cấp --</option>
+              <option *ngFor="let s of suppliers" [ngValue]="s.id || s.supplierId">{{ s.supplierName || s.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label>Mã phiếu (tùy chọn)</label>
+            <input type="text" [(ngModel)]="newPo.poCode">
+          </div>
+
+          <div class="form-row">
+            <label>Ngày phiếu</label>
+            <input type="datetime-local" [(ngModel)]="newPo.poDate">
+          </div>
+
+          <div class="form-row">
+            <label>Ngày dự kiến giao</label>
+            <input type="datetime-local" [(ngModel)]="newPo.expectedDeliveryDate">
+          </div>
+
+          <div class="form-row">
+            <label>Ghi chú</label>
+            <textarea [(ngModel)]="newPo.notes" rows="3"></textarea>
+          </div>
+
+          <div class="items-section">
+            <h4>Mặt hàng</h4>
+            <table class="items-table">
+              <thead>
+                <tr><th>Sản phẩm</th><th>Số lượng</th><th>Giá nhập</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let it of newPo.details; let i = index">
+                  <td>
+                    <select [(ngModel)]="it.productId">
+                      <option [ngValue]="null">-- Chọn sản phẩm --</option>
+                      <option *ngFor="let p of products" [ngValue]="p.id || p.productId">{{ p.productName || p.name }}</option>
+                    </select>
+                  </td>
+                  <td><input type="number" [(ngModel)]="it.quantity" min="1"></td>
+                  <td><input type="number" [(ngModel)]="it.importPrice" min="0" step="0.01"></td>
+                  <td><button class="btn-remove" (click)="removeItemFromNewPo(i)">Xóa</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <button class="btn-add-item" (click)="addItemToNewPo()">Thêm mặt hàng</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="closeDialog()">Hủy</button>
+          <button class="btn-save" (click)="createPurchaseOrder()">Tạo phiếu nhập</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

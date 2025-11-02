@@ -2,6 +2,7 @@
 using Backend.Services.Momo;
 using Microsoft.AspNetCore.Mvc;
 using Backend.Models;
+using Microsoft.AspNetCore.Authorization; 
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,8 +10,10 @@ using YourShopManagement.API.Data;
 
 namespace Backend.Controllers
 {
+   
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "ShopOwner")]
     public class CheckoutController : ControllerBase
     {
         private readonly IMomoService _momoService;

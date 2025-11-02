@@ -9,6 +9,7 @@ namespace YourShopManagement.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "ShopOwner")]
     [AllowAnonymous]
     public class InvoicesController : ControllerBase
     {

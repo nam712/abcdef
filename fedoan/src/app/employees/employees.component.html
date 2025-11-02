@@ -1,0 +1,337 @@
+<!-- Trang Quản lý Nhân viên (giống trang Nhà sản xuất) -->
+<div class="employees-container">
+  <!-- Header with Navigation -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <h1 class="logo">FeDoan</h1>
+        <button class="mobile-menu-toggle" (click)="toggleMobileMenu()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <nav class="main-nav" [class.mobile-open]="isMobileMenuOpen">
+          <a href="#" class="nav-link" (click)="navigateToDashboard(); $event.preventDefault()">Trang chủ</a>
+          <a href="#" class="nav-link" (click)="navigateToProducts(); $event.preventDefault()">Hàng hóa</a>
+          <a class="nav-link" routerLink="/pos">Bán hàng</a>
+          <a href="#" class="nav-link" (click)="navigateToCustomers(); $event.preventDefault()">Khách hàng</a>
+          <a href="#" class="nav-link active" (click)="navigateToEmployees(); $event.preventDefault()">Nhân viên</a>
+          <a href="#" class="nav-link" (click)="navigateToReports(); $event.preventDefault()">Báo cáo</a>
+          <a href="#" class="nav-link" (click)="navigateToManufacturers(); $event.preventDefault()">Nhà sản xuất</a>
+          <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
+        </nav>
+      </div>
+      <div class="user-section">
+        <button class="theme-toggle" (click)="changeTheme()" title="Đổi theme">
+          <i class="fas fa-palette"></i>
+          <span>{{ getCurrentThemeLabel() }}</span>
+        </button>
+        
+        <app-notification-bell></app-notification-bell>
+        
+        <div class="user-profile">
+          <img [src]="currentUser.avatar" [alt]="currentUser.name" class="user-avatar">
+          <div class="user-info">
+            <span class="user-name">{{ currentUser.name }}</span>
+            <button class="logout-btn" (click)="logout()" title="Đăng xuất">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Đăng xuất</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-content">
+    <div class="content-layout">
+      <!-- Mobile Filter Toggle Button -->
+      <button class="mobile-filter-toggle" (click)="toggleFilters()" *ngIf="!showFilters">
+        <i class="fas fa-filter"></i>
+        <span>Bộ lọc</span>
+        <span class="filter-count" *ngIf="hasActiveFilters()">{{ getActiveFilterCount() }}</span>
+      </button>
+
+      <!-- Left Sidebar - Filters -->
+      <aside class="filters-sidebar" [class.mobile-show]="showFilters">
+        <div class="filters-header">
+          <h3><i class="fas fa-filter"></i> Bộ lọc</h3>
+          <div class="filters-header-actions">
+            <button class="btn-reset-filter" (click)="resetFilters()" title="Xóa bộ lọc">
+              <i class="fas fa-redo"></i>
+            </button>
+            <button class="btn-close-filter" (click)="toggleFilters()" title="Đóng">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        <div class="filters-content">
+          <!-- Tìm kiếm -->
+          <div class="filter-group">
+            <label><i class="fas fa-search"></i> Tìm kiếm</label>
+            <input type="text"
+                   class="filter-input"
+                   [(ngModel)]="filters.searchText"
+                   (input)="applyFilter()"
+                   placeholder="Tên, mã, SĐT, email...">
+          </div>
+          <!-- Chức vụ -->
+          <div class="filter-group">
+            <label><i class="fas fa-user-tie"></i> Chức vụ</label>
+            <input type="text"
+                   class="filter-input"
+                   [(ngModel)]="filters.position"
+                   (input)="applyFilter()"
+                   placeholder="Quản lý, bán hàng...">
+          </div>
+          <!-- Trạng thái -->
+          <div class="filter-group">
+            <label><i class="fas fa-toggle-on"></i> Trạng thái</label>
+            <select class="filter-select"
+                    [(ngModel)]="filters.workStatus"
+                    (change)="applyFilter()">
+              <option value="">Tất cả</option>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Ngừng hoạt động</option>
+              <option value="probation">Thử việc</option>
+            </select>
+          </div>
+          <!-- Sắp xếp -->
+          <div class="filter-group">
+            <label><i class="fas fa-sort"></i> Sắp xếp theo</label>
+            <select class="filter-select"
+                    [(ngModel)]="filters.sortBy"
+                    (change)="applyFilter()">
+              <option value="name-asc">Tên A-Z</option>
+              <option value="name-desc">Tên Z-A</option>
+              <option value="recent">Mới nhất</option>
+            </select>
+          </div>
+        </div>
+        <!-- Filter Summary -->
+        <div class="filter-summary">
+          <p><strong>{{ filteredEmployees.length }}</strong> nhân viên</p>
+        </div>
+      </aside>
+
+      <!-- Overlay for mobile filters -->
+      <div class="filters-overlay"
+           [class.active]="showFilters"
+           (click)="toggleFilters()"></div>
+
+      <!-- Right Content Area -->
+      <div class="content-area">
+        <div class="content-header">
+          <h2>Quản lý Nhân viên</h2>
+          <button class="btn-add-new" (click)="openAddDialog()" [disabled]="isLoading">
+            <i class="fas fa-plus"></i>
+            <span>Thêm nhân viên</span>
+          </button>
+        </div>
+        <!-- Loading Spinner -->
+        <div class="loading-container" *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Đang tải dữ liệu...</p>
+        </div>
+        <!-- Error Message -->
+        <div class="error-message" *ngIf="errorMessage && !isLoading">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+        <!-- Employees Table -->
+        <div class="table-container" *ngIf="!isLoading">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã NV</th>
+                <th>Tên nhân viên</th>
+                <th>Điện thoại</th>
+                <th>Email</th>
+                <th>Phòng ban</th>
+                <th>Chức vụ</th>
+                <th>Ngày vào làm</th>
+                <th>Lương</th>
+                <th>Trạng thái làm việc</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngIf="filteredEmployees && filteredEmployees.length > 0; else noData">
+                <tr *ngFor="let employee of filteredEmployees; trackBy: trackByEmployeeId">
+                  <td><strong>{{ employee.employeeCode }}</strong></td>
+                  <td>{{ employee.employeeName }}</td>
+                  <td>{{ employee.phone }}</td>
+                  <td>{{ employee.email || 'N/A' }}</td>
+                  <td>{{ employee.department || 'N/A' }}</td>
+                  <td>{{ employee.position || 'N/A' }}</td>
+                  <td>{{ employee.hireDate ? (employee.hireDate | date:'dd/MM/yyyy') : 'N/A' }}</td>
+                  <td>{{ employee.salary | number:'1.0-0' }}</td>
+                  <td>
+                    <span class="status-badge" [ngClass]="employee.workStatus">
+                      {{ employee.workStatus || 'N/A' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-action btn-edit" (click)="editEmployee(employee)" title="Chỉnh sửa" [disabled]="isLoading">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn-action btn-delete" (click)="deleteEmployee(employee)" title="Xóa" [disabled]="isLoading">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+              <ng-template #noData>
+                <tr>
+                  <td colspan="10" class="no-data">
+                    <i class="fas fa-users"></i>
+                    <p>{{ filters.searchText ? 'Không tìm thấy nhân viên phù hợp' : 'Chưa có dữ liệu nhân viên' }}</p>
+                  </td>
+                </tr>
+              </ng-template>
+            </tbody>
+          </table>
+        </div>
+        <!-- Add/Edit Employee Dialog -->
+        <div class="dialog-overlay" [class.active]="showDialog" (click)="closeDialog()">
+          <div class="dialog-container" (click)="$event.stopPropagation()">
+            <div class="dialog-header">
+              <h3>{{ isEditMode ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới' }}</h3>
+              <button class="btn-close" (click)="closeDialog()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="dialog-error" *ngIf="errorMessage">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span>{{ errorMessage }}</span>
+            </div>
+            <form class="dialog-form" (ngSubmit)="saveEmployee()">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="employeeCode">Mã nhân viên <span class="required">*</span></label>
+                  <input type="text" id="employeeCode" [(ngModel)]="currentEmployee.employeeCode"
+                         name="employeeCode" placeholder="VD: a1b2c3d4" required readonly maxlength="8">
+                  <small class="form-hint">Mã sẽ được tạo tự động (8 ký tự)</small>
+                </div>
+                <div class="form-group full-width">
+                  <label for="employeeName">Tên nhân viên <span class="required">*</span></label>
+                  <input type="text" id="employeeName" [(ngModel)]="currentEmployee.employeeName"
+                         name="employeeName" placeholder="VD: Nguyễn Văn B" required>
+                </div>
+                <div class="form-group">
+                  <label for="phone">Số điện thoại <span class="required">*</span></label>
+                  <input type="tel" id="phone" [(ngModel)]="currentEmployee.phone"
+                         name="phone" placeholder="VD: 0123456789" required>
+                </div>
+                <div class="form-group">
+                  <label for="email">Email</label>
+                  <input type="email" id="email" [(ngModel)]="currentEmployee.email"
+                         name="email" placeholder="VD: employee@example.com">
+                </div>
+                <div class="form-group">
+                  <label for="position">Chức vụ</label>
+                  <input type="text" id="position" [(ngModel)]="currentEmployee.position"
+                         name="position" placeholder="VD: Quản lý, Nhân viên bán hàng">
+                </div>
+                <div class="form-group">
+                  <label for="workStatus">Trạng thái làm việc</label>
+                  <select id="workStatus" [(ngModel)]="currentEmployee.workStatus" name="workStatus">
+                    <option value="">Chọn</option>
+                    <option value="active">Hoạt động</option>
+                    <option value="inactive">Ngừng hoạt động</option>
+                    <option value="probation">Thử việc</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="address">Địa chỉ</label>
+                  <input type="text" id="address" [(ngModel)]="currentEmployee.address" name="address" placeholder="Địa chỉ">
+                </div>
+                <div class="form-group">
+                  <label for="dateOfBirth">Ngày sinh</label>
+                  <input type="date" id="dateOfBirth" [(ngModel)]="currentEmployee.dateOfBirth" name="dateOfBirth">
+                </div>
+                <div class="form-group">
+                  <label for="gender">Giới tính</label>
+                  <select id="gender" [(ngModel)]="currentEmployee.gender" name="gender">
+                    <option value="">Chọn</option>
+                    <option value="male">Nam</option>
+                    <option value="female">Nữ</option>
+                    <option value="other">Khác</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="idCard">CMND/CCCD</label>
+                  <input type="text" id="idCard" [(ngModel)]="currentEmployee.idCard" name="idCard" placeholder="CMND/CCCD">
+                </div>
+                <div class="form-group">
+                  <label for="department">Phòng ban</label>
+                  <input type="text" id="department" [(ngModel)]="currentEmployee.department" name="department" placeholder="Phòng ban">
+                </div>
+                <div class="form-group">
+                  <label for="hireDate">Ngày vào làm</label>
+                  <input type="date" id="hireDate" [(ngModel)]="currentEmployee.hireDate" name="hireDate">
+                </div>
+                <div class="form-group">
+                  <label for="salary">Lương</label>
+                  <input type="number" id="salary" [(ngModel)]="currentEmployee.salary" name="salary" placeholder="0" min="0">
+                </div>
+                <div class="form-group">
+                  <label for="salaryType">Loại lương</label>
+                  <input type="text" id="salaryType" [(ngModel)]="currentEmployee.salaryType" name="salaryType" placeholder="Loại lương">
+                </div>
+                <div class="form-group">
+                  <label for="bankAccount">Số tài khoản</label>
+                  <input type="text" id="bankAccount" [(ngModel)]="currentEmployee.bankAccount" name="bankAccount" placeholder="Số tài khoản">
+                </div>
+                <div class="form-group">
+                  <label for="bankName">Tên ngân hàng</label>
+                  <input type="text" id="bankName" [(ngModel)]="currentEmployee.bankName" name="bankName" placeholder="Tên ngân hàng">
+                </div>
+                <div class="form-group">
+                  <label for="username">Tên đăng nhập</label>
+                  <input type="text" id="username" [(ngModel)]="currentEmployee.username" name="username" placeholder="Tên đăng nhập">
+                </div>
+                <div class="form-group">
+                  <label for="password">Mật khẩu</label>
+                  <input type="password" id="password" [(ngModel)]="currentEmployee.password" name="password" placeholder="Mật khẩu">
+                </div>
+                <div class="form-group">
+                  <label for="permissions">Quyền</label>
+                  <input type="text" id="permissions" [(ngModel)]="currentEmployee.permissions" name="permissions" placeholder="Quyền">
+                </div>
+                <div class="form-group">
+                  <label for="avatarUrl">Avatar</label>
+                  <input type="text" id="avatarUrl" [(ngModel)]="currentEmployee.avatarUrl" name="avatarUrl" placeholder="URL ảnh đại diện">
+                </div>
+                <div class="form-group">
+                  <label for="workStatus">Trạng thái làm việc</label>
+                  <select id="workStatus" [(ngModel)]="currentEmployee.workStatus" name="workStatus">
+                    <option value="">Chọn</option>
+                    <option value="active">Hoạt động</option>
+                    <option value="inactive">Ngừng hoạt động</option>
+                    <option value="probation">Thử việc</option>
+                  </select>
+                </div>
+                <div class="form-group full-width">
+                  <label for="notes">Ghi chú</label>
+                  <textarea id="notes" [(ngModel)]="currentEmployee.notes"
+                            name="notes" rows="3" placeholder="Ghi chú thêm về nhân viên..."></textarea>
+                </div>
+              </div>
+              <div class="dialog-footer">
+                <button type="button" class="btn-cancel" (click)="closeDialog()" [disabled]="isLoading">
+                  <i class="fas fa-times"></i>
+                  Hủy
+                </button>
+                <button type="submit" class="btn-save" [disabled]="isLoading">
+                  <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                  {{ isLoading ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Thêm mới') }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

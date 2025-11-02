@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -16,6 +15,11 @@ namespace YourShopManagement.API.Models
         [Column("purchase_order_id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int PurchaseOrderId { get; set; }
+
+        // ✅ Liên kết chủ shop (NOT NULL)
+        [Required]
+        [Column("shop_owner_id")]
+        public int ShopOwnerId { get; set; }
 
         [Required(ErrorMessage = "Mã phiếu nhập không được để trống")]
         [MaxLength(50)]
@@ -59,9 +63,12 @@ namespace YourShopManagement.API.Models
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation Properties
+        // ✅ NAVIGATION PROPERTIES
         [ForeignKey("SupplierId")]
         public virtual Supplier Supplier { get; set; } = null!;
+
+        [ForeignKey("ShopOwnerId")]
+        public virtual ShopOwner ShopOwner { get; set; } = null!;
 
         public virtual ICollection<PurchaseOrderDetail>? PurchaseOrderDetails { get; set; }
     }

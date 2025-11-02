@@ -275,4 +275,5 @@ export class RegisterComponent implements OnInit {
     }
     return '';
   }
+  
 }

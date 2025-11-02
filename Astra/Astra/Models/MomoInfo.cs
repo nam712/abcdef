@@ -1,28 +1,30 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using YourShopManagement.API.Models; // để truy cập ShopOwner
 
 namespace Backend.Models
 {
-    [Table("momoinfos")]
+    [Table("momo_infos")]
     public class MomoInfo
     {
         [Key]
         [Column("id")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         [Required]
         [Column("order_id")]
         [MaxLength(255)]
-        public string OrderId { get; set; }
+        public string OrderId { get; set; } = string.Empty;
 
         [Required]
         [Column("order_info", TypeName = "text")]
-        public string OrderInfo { get; set; }
+        public string OrderInfo { get; set; } = string.Empty;
 
         [Column("full_name")]
         [MaxLength(255)]
-        public string Fullname { get; set; }
+        public string? Fullname { get; set; }
 
         [Column("amount", TypeName = "decimal(18,2)")]
         public decimal? Amount { get; set; }
@@ -34,8 +36,17 @@ namespace Backend.Models
         [Column("payment_method_id")]
         public int PaymentMethodId { get; set; }
 
-        // Navigation property
+        // ✅ Thêm chủ shop (bắt buộc)
+        [Required]
+        [Column("shop_owner_id")]
+        public int ShopOwnerId { get; set; }
+
+        // ✅ Navigation property đến PaymentMethod
         [ForeignKey("PaymentMethodId")]
-        public virtual PaymentMethod PaymentMethod { get; set; }
+        public virtual PaymentMethod PaymentMethod { get; set; } = null!;
+
+        // ✅ Navigation property đến ShopOwner
+        [ForeignKey("ShopOwnerId")]
+        public virtual ShopOwner ShopOwner { get; set; } = null!;
     }
 }

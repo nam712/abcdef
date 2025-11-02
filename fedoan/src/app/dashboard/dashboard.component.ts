@@ -3,11 +3,13 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../services/auth.service';
 import { ConfirmationDialogComponent } from '../shared/confirmation-dialog/confirmation-dialog.component';
+import { NotificationBellComponent } from '../shared/notification-bell/notification-bell.component';
+import { NotificationService } from '../services/notification.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, ConfirmationDialogComponent],
+  imports: [CommonModule, RouterModule, ConfirmationDialogComponent, NotificationBellComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
@@ -55,7 +57,8 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -65,6 +68,9 @@ export class DashboardComponent implements OnInit {
       this.currentTheme = savedTheme;
       this.applyTheme(savedTheme);
     }
+    
+    // Thông báo chào mừng
+    this.notificationService.addNotification('Chào mừng đến với Dashboard!', 'success');
   }
 
   changeTheme(): void {
@@ -111,6 +117,10 @@ export class DashboardComponent implements OnInit {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
   }
 
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen = false;
+  }
+
   // Products submenu handlers
   openProductsSubmenu(): void {
     this.productsSubmenuOpen = true;
@@ -126,43 +136,79 @@ export class DashboardComponent implements OnInit {
 
   // Navigation methods for submenu items
   navigateToProducts(): void {
+    console.log('🔍 Navigating to products...');
     this.productsSubmenuOpen = false;
     this.isMobileMenuOpen = false;
-    console.log('Navigate to product list');
-    // this.router.navigate(['/products']); // uncomment and create route when ready
+    
+    this.router.navigate(['/products'])
+      .then((success) => {
+        console.log('✅ Navigation to products:', success);
+      })
+      .catch((error) => {
+        console.error('❌ Navigation failed:', error);
+        alert('Không thể chuyển trang. Vui lòng kiểm tra console.');
+      });
   }
 
   navigateToStockIn(): void {
     this.productsSubmenuOpen = false;
     this.isMobileMenuOpen = false;
     console.log('Navigate to stock in (Nhập kho)');
-    // this.router.navigate(['/products/stock-in']);
+    this.router.navigate(['/stock-in']);
   }
 
   navigateToStockOut(): void {
     this.productsSubmenuOpen = false;
     this.isMobileMenuOpen = false;
     console.log('Navigate to stock out (Xuất kho)');
-    // this.router.navigate(['/products/stock-out']);
+    this.router.navigate(['/stock-out']);
   }
 
   navigateToTasks(): void {
-    // Navigate to tasks page (to be implemented)
     console.log('Navigate to tasks');
+    this.closeMobileMenu();
+  }
+
+  navigateToCustomers(): void {
+    console.log('Navigating to customers...');
+    this.router.navigate(['/customers']);
+    this.closeMobileMenu();
   }
 
   navigateToEmployees(): void {
-    this.isMobileMenuOpen = false;
-    console.log('Navigate to employees');
+    console.log('Navigating to employees...');
+    this.router.navigate(['/employees']);
+    this.closeMobileMenu();
   }
 
   navigateToReports(): void {
-    this.isMobileMenuOpen = false;
-    console.log('Navigate to reports');
+    console.log('Navigating to reports...');
+    this.router.navigate(['/reports']);
+    this.closeMobileMenu();
   }
 
   navigateToManufacturers(): void {
-    this.isMobileMenuOpen = false;
-    console.log('Navigate to manufacturers');
+    console.log('🔍 Starting navigation to manufacturers...');
+    this.closeMobileMenu();
+    this.closeProductsSubmenu();
+    
+    this.router.navigate(['/manufacturer'])
+      .then((result) => {
+        if (result) {
+          console.log('✅ Navigation to manufacturer successful');
+        } else {
+          console.log('❌ Navigation to manufacturer failed');
+        }
+      })
+      .catch((error) => {
+        console.error('❌ Navigation error:', error);
+      });
+  }
+
+  navigateToInvoices(): void {
+    console.log('🔍 Starting navigation to invoices...');
+    this.closeMobileMenu();
+    this.closeProductsSubmenu();
+    this.router.navigate(['/invoices']);
   }
 }

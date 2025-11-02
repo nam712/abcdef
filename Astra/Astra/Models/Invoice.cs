@@ -1,5 +1,4 @@
-﻿
-using Backend.Models;
+﻿using Backend.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -17,6 +16,11 @@ namespace YourShopManagement.API.Models
         [Column("invoice_id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int InvoiceId { get; set; }
+
+        // ✅ Liên kết chủ shop (NOT NULL)
+        [Required]
+        [Column("shop_owner_id")]
+        public int ShopOwnerId { get; set; }
 
         [Required(ErrorMessage = "Mã hóa đơn không được để trống")]
         [MaxLength(50)]
@@ -67,15 +71,18 @@ namespace YourShopManagement.API.Models
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation Properties
+        // ✅ Navigation Properties
         [ForeignKey("CustomerId")]
         public virtual Customer Customer { get; set; } = null!;
 
         [ForeignKey("EmployeeId")]
-        public virtual Employee Employee { get; set; }
+        public virtual Employee? Employee { get; set; }
 
         [ForeignKey("PaymentMethodId")]
-        public virtual PaymentMethod PaymentMethod { get; set; }
+        public virtual PaymentMethod? PaymentMethod { get; set; }
+
+        [ForeignKey("ShopOwnerId")]
+        public virtual ShopOwner ShopOwner { get; set; } = null!;
 
         public virtual ICollection<InvoiceDetail>? InvoiceDetails { get; set; }
     }

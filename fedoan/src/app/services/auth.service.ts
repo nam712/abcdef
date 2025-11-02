@@ -32,7 +32,7 @@ export interface AuthResponse {
 })
 export class AuthService {
   // Hardcode tạm thời để test
-  private apiUrl = 'http://localhost:5001/api/auth';
+  private apiUrl = `${environment.apiUrl}/api/auth` ;
 
   constructor(private http: HttpClient) {
     console.log('🔧 Auth Service initialized');
@@ -61,6 +61,32 @@ export class AuthService {
     return localStorage.getItem('auth_token');
   }
 
+  getCurrentUserId(): string | null {
+    // Lấy user data từ localStorage
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        return user.employeeId || user.shopOwnerId || user.id || null;
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
+    
+    // Hoặc decode từ JWT token
+    const token = this.getToken();
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.sub || payload.userId || payload.nameid || null;
+      } catch (e) {
+        console.error('Error decoding token:', e);
+      }
+    }
+    
+    return null;
+  }
+
   isAuthenticated(): boolean {
     const token = this.getToken();
     return !!token;
@@ -68,6 +94,13 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
     console.log('🚪 Logged out - Token removed from localStorage');
+  }
+
+  forgotPassword(phone: string): Observable<AuthResponse> {
+    const forgotPasswordData = { phone };
+    console.log('📤 Sending forgot password request:', forgotPasswordData);
+    return this.http.post<AuthResponse>(`${this.apiUrl}/forgot-password`, forgotPasswordData);
   }
 }

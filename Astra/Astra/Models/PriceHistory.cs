@@ -19,6 +19,11 @@ namespace YourShopManagement.API.Models
         [Column("product_id")]
         public int ProductId { get; set; }
 
+        // ✅ Thêm shop_owner_id
+        [Required]
+        [Column("shop_owner_id")]
+        public int ShopOwnerId { get; set; }
+
         [Column("old_price", TypeName = "decimal(18,2)")]
         public decimal? OldPrice { get; set; }
 
@@ -48,5 +53,9 @@ namespace YourShopManagement.API.Models
         // Navigation Properties
         [ForeignKey("ProductId")]
         public virtual Product Product { get; set; } = null!;
+
+        // ✅ Navigation tới chủ shop
+        [ForeignKey("ShopOwnerId")]
+        public virtual ShopOwner ShopOwner { get; set; } = null!;
     }
 }

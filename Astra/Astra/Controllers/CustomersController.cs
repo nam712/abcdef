@@ -9,9 +9,11 @@ using System.Linq;
 
 namespace YourShopManagement.API.Controllers  
 {
+   
     [ApiController]
     [Route("api/[controller]")]
-    [AllowAnonymous]
+    [Authorize(Roles = "ShopOwner")]
+  
     public class CustomersController : ControllerBase
     {
         private readonly ICustomerService _service;

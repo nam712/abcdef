@@ -1,0 +1,169 @@
+/* Import base styles from products component */
+@import '../products/products.component.css';
+@import '../employees/employees.component.css';
+/* Customers specific styles */
+.customer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.customer-info strong {
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.customer-info small {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.type-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.type-badge.retail {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.type-badge.wholesale {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.points-cell {
+  color: #f59e0b;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.points-cell i {
+  font-size: 1rem;
+}
+
+/* Layout with sidebar */
+.content-layout {
+  display: flex;
+  gap: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.filters-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  height: fit-content;
+  position: sticky;
+  top: 2rem;
+  transition: transform 0.3s ease;
+}
+
+.content-area {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .content-layout {
+    flex-direction: column;
+  }
+
+  .filters-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 320px;
+    max-width: 85vw;
+    z-index: 1000;
+    transform: translateX(-100%);
+    border-radius: 0;
+    overflow-y: auto;
+  }
+
+  .filters-sidebar.mobile-show {
+    transform: translateX(0);
+  }
+
+  .filters-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+
+  .filters-overlay.active {
+    display: block;
+  }
+}
+
+/* Mobile filter toggle */
+.mobile-filter-toggle {
+  display: none;
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: var(--primary-color, #6366f1);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  cursor: pointer;
+  z-index: 900;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.filter-count {
+  background: white;
+  color: var(--primary-color, #6366f1);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .customer-info small {
+    font-size: 0.75rem;
+  }
+}
+
+/* Dark theme support */
+.theme-dark .customer-info strong {
+  color: #f1f5f9;
+}
+
+.theme-dark .customer-info small {
+  color: #94a3b8;
+}
+
+.theme-dark .filters-sidebar {
+  background: #1e293b;
+}
+
+/* Để giống hoàn toàn layout trang hàng hóa, chỉ cần import lại layout từ products.component.css */
+@import '../products/products.component.css';
+
+/* Bạn có thể giữ lại các custom style riêng cho khách hàng ở dưới nếu muốn */

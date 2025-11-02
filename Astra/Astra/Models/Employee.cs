@@ -1,5 +1,6 @@
 ﻿// Employee entity class for the employees table
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using YourShopManagement.API.Models;
@@ -17,6 +18,11 @@ namespace Backend.Models
         [Column("employee_id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int EmployeeId { get; set; }
+
+        // ✅ THÊM LIÊN KẾT SHOP OWNER
+        [Required]
+        [Column("shop_owner_id")]
+        public int ShopOwnerId { get; set; }
 
         [Required(ErrorMessage = "Mã nhân viên không được để trống")]
         [MaxLength(50)]
@@ -110,8 +116,13 @@ namespace Backend.Models
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation Properties
+        // ✅ NAVIGATION PROPERTY LIÊN KẾT SHOP OWNER
+        [ForeignKey("ShopOwnerId")]
+        public virtual ShopOwner ShopOwner { get; set; } = null!;
+
+        // Navigation Properties cũ
         public virtual ICollection<Invoice>? Invoices { get; set; }
+
         /// <summary>
         /// Validation: Nếu có Username thì bắt buộc phải có Password
         /// </summary>
@@ -124,6 +135,4 @@ namespace Backend.Models
             return true;
         }
     }
-
-
 }

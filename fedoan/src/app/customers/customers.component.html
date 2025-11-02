@@ -1,0 +1,347 @@
+<div class="customers-container">
+  <!-- Header with Navigation -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <h1 class="logo">FeDoan</h1>
+        <button class="mobile-menu-toggle" (click)="toggleMobileMenu()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <nav class="main-nav" [class.mobile-open]="isMobileMenuOpen">
+          <a href="#" class="nav-link" (click)="navigateToDashboard(); $event.preventDefault()">Trang chủ</a>
+
+          <!-- Hàng hóa with submenu -->
+          <div class="nav-item dropdown"
+               (mouseenter)="openProductsSubmenu()"
+               (mouseleave)="closeProductsSubmenu()">
+            <button class="nav-link dropdown-toggle" type="button"
+                    (click)="toggleProductsSubmenu(); $event.stopPropagation()">
+              Hàng hóa <i class="fas fa-caret-down"></i>
+            </button>
+
+            <div class="submenu" [class.open]="productsSubmenuOpen" role="menu" [attr.aria-hidden]="!productsSubmenuOpen">
+              <a href="#" class="nav-link" (click)="navigateToProducts(); $event.preventDefault()">Danh sách Hàng hóa</a>
+              <a href="#" class="nav-link" (click)="navigateToStockIn(); $event.preventDefault()">Nhập kho</a>
+              <a href="#" class="nav-link" (click)="navigateToStockOut(); $event.preventDefault()">Xuất kho</a>
+            </div>
+          </div>
+
+          <a class="nav-link" routerLink="/pos">Bán hàng</a>
+          <a href="#" class="nav-link active" (click)="navigateToCustomers(); $event.preventDefault()">Khách hàng</a>
+          <a href="#" class="nav-link" (click)="navigateToEmployees(); $event.preventDefault()">Nhân viên</a>
+          <a href="#" class="nav-link" (click)="navigateToReports(); $event.preventDefault()">Báo cáo</a>
+          <a href="#" class="nav-link" (click)="navigateToManufacturers(); $event.preventDefault()">Nhà sản xuất</a>
+          <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
+        </nav>
+      </div>
+      
+      <div class="user-section">
+        <button class="theme-toggle" (click)="changeTheme()" title="Đổi theme">
+          <i class="fas fa-palette"></i>
+          <span>{{ getCurrentThemeLabel() }}</span>
+        </button>
+        
+        <app-notification-bell></app-notification-bell>
+        
+        <div class="user-profile">
+          <img [src]="currentUser.avatar" [alt]="currentUser.name" class="user-avatar">
+          <div class="user-info">
+            <span class="user-name">{{ currentUser.name }}</span>
+            <button class="logout-btn" (click)="logout()" title="Đăng xuất">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Đăng xuất</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-content">
+    <div class="content-layout">
+      <!-- Mobile Filter Toggle Button -->
+      <button class="mobile-filter-toggle" (click)="toggleFilters()" *ngIf="!showFilters">
+        <i class="fas fa-filter"></i>
+        <span>Bộ lọc</span>
+        <span class="filter-count" *ngIf="hasActiveFilters()">{{ getActiveFilterCount() }}</span>
+      </button>
+
+      <!-- Left Sidebar - Filters -->
+      <aside class="filters-sidebar" [class.mobile-show]="showFilters">
+        <div class="filters-header">
+          <h3><i class="fas fa-filter"></i> Bộ lọc</h3>
+          <div class="filters-header-actions">
+            <button class="btn-reset-filter" (click)="resetFilters()" title="Xóa bộ lọc">
+              <i class="fas fa-redo"></i>
+            </button>
+            <button class="btn-close-filter" (click)="toggleFilters()" title="Đóng">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filters-content">
+          <!-- Tìm kiếm -->
+          <div class="filter-group">
+            <label><i class="fas fa-search"></i> Tìm kiếm</label>
+            <input type="text" 
+                   class="filter-input" 
+                   [(ngModel)]="filters.searchText"
+                   (input)="applyFilter()"
+                   placeholder="Tên, mã, SĐT, email...">
+          </div>
+
+          <!-- Loại khách hàng -->
+          <div class="filter-group">
+            <label><i class="fas fa-user-tag"></i> Loại khách hàng</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.customerType"
+                    (change)="applyFilter()">
+              <option value="">Tất cả</option>
+              <option value="retail">Khách lẻ</option>
+              <option value="wholesale">Khách sỉ</option>
+            </select>
+          </div>
+
+          <!-- Trạng thái -->
+          <div class="filter-group">
+            <label><i class="fas fa-toggle-on"></i> Trạng thái</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.status"
+                    (change)="applyFilter()">
+              <option value="">Tất cả</option>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Ngừng hoạt động</option>
+            </select>
+          </div>
+
+          <!-- Sắp xếp -->
+          <div class="filter-group">
+            <label><i class="fas fa-sort"></i> Sắp xếp theo</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.sortBy"
+                    (change)="applyFilter()">
+              <option value="name-asc">Tên A-Z</option>
+              <option value="name-desc">Tên Z-A</option>
+              <option value="points-desc">Điểm cao → thấp</option>
+              <option value="points-asc">Điểm thấp → cao</option>
+              <option value="recent">Mới nhất</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Summary -->
+        <div class="filter-summary">
+          <p><strong>{{ filteredCustomers.length }}</strong> / {{ customers.length }} khách hàng</p>
+        </div>
+      </aside>
+
+      <!-- Overlay for mobile filters -->
+      <div class="filters-overlay" 
+           [class.active]="showFilters" 
+           (click)="toggleFilters()"></div>
+
+      <!-- Right Content Area -->
+      <div class="content-area">
+        <div class="content-header">
+          <h2>Quản lý Khách hàng</h2>
+          <button class="btn-add-new" (click)="openAddDialog()" [disabled]="isLoading">
+            <i class="fas fa-plus"></i>
+            <span>Thêm khách hàng</span>
+          </button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-container" *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Đang tải dữ liệu...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" *ngIf="errorMessage && !isLoading">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Customers Table -->
+        <div class="table-container" *ngIf="!isLoading">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã KH</th>
+                <th>Tên khách hàng</th>
+                <th>Điện thoại</th>
+                <th>Email</th>
+                <th>Địa chỉ</th>
+                <th>Loại KH</th>
+                <th>Điểm thưởng</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngIf="filteredCustomers && filteredCustomers.length > 0; else noData">
+                <tr *ngFor="let customer of filteredCustomers; trackBy: trackByCustomerId">
+                  <td><strong>{{ customer.customerCode }}</strong></td>
+                  <td>
+                    <div class="customer-info">
+                      <strong>{{ customer.customerName }}</strong>
+                      <small *ngIf="customer.contactPerson">{{ customer.contactPerson }}</small>
+                    </div>
+                  </td>
+                  <td>{{ customer.phone }}</td>
+                  <td>{{ customer.email || 'N/A' }}</td>
+                  <td>{{ customer.address || 'N/A' }}</td>
+                  <td>
+                    <span class="type-badge" [ngClass]="customer.customerType">
+                      {{ customer.customerType === 'retail' ? 'Lẻ' : 'Sỉ' }}
+                    </span>
+                  </td>
+                  <td class="points-cell">
+                    <i class="fas fa-star"></i>
+                    {{ customer.loyaltyPoints || 0 }}
+                  </td>
+                  <td>
+                    <span class="status-badge" [ngClass]="customer.status">
+                      {{ customer.status === 'active' ? 'Hoạt động' : 'Ngừng' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-action btn-edit" (click)="editCustomer(customer)" title="Chỉnh sửa" [disabled]="isLoading">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn-action btn-delete" (click)="deleteCustomer(customer)" title="Xóa" [disabled]="isLoading">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+              <ng-template #noData>
+                <tr>
+                  <td colspan="9" class="no-data">
+                    <i class="fas fa-users"></i>
+                    <p>{{ filters.searchText ? 'Không tìm thấy khách hàng phù hợp' : 'Chưa có dữ liệu khách hàng' }}</p>
+                  </td>
+                </tr>
+              </ng-template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add/Edit Customer Dialog -->
+  <div class="dialog-overlay" [class.active]="showDialog" (click)="closeDialog()">
+    <div class="dialog-container" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h3>{{ isEditMode ? 'Chỉnh sửa khách hàng' : 'Thêm khách hàng mới' }}</h3>
+        <button class="btn-close" (click)="closeDialog()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Error Message in Dialog -->
+      <div class="dialog-error" *ngIf="errorMessage">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <form class="dialog-form" (ngSubmit)="saveCustomer()">
+        <div class="form-grid">
+          <!-- Mã khách hàng -->
+          <div class="form-group">
+            <label for="customerCode">Mã khách hàng <span class="required">*</span></label>
+            <input type="text" id="customerCode" [(ngModel)]="currentCustomer.customerCode" 
+                   name="customerCode" placeholder="VD: a1b2c3d4" required readonly maxlength="8">
+            <small class="form-hint">Mã sẽ được tạo tự động (8 ký tự)</small>
+          </div>
+
+          <!-- Loại khách hàng -->
+          <div class="form-group">
+            <label for="customerType">Loại khách hàng <span class="required">*</span></label>
+            <select id="customerType" [(ngModel)]="currentCustomer.customerType" name="customerType" required>
+              <option value="retail">Khách lẻ</option>
+              <option value="wholesale">Khách sỉ</option>
+            </select>
+          </div>
+
+          <!-- Tên khách hàng -->
+          <div class="form-group full-width">
+            <label for="customerName">Tên khách hàng <span class="required">*</span></label>
+            <input type="text" id="customerName" [(ngModel)]="currentCustomer.customerName" 
+                   name="customerName" placeholder="VD: Nguyễn Văn A" required>
+          </div>
+
+          <!-- Người liên hệ -->
+          
+
+          <!-- Điện thoại -->
+          <div class="form-group">
+            <label for="phone">Số điện thoại <span class="required">*</span></label>
+            <input type="tel" id="phone" [(ngModel)]="currentCustomer.phone" 
+                   name="phone" placeholder="VD: 0123456789" required>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" [(ngModel)]="currentCustomer.email" 
+                   name="email" placeholder="VD: customer@example.com">
+          </div>
+
+          <!-- Mã số thuế -->
+          <div class="form-group">
+            <label for="taxCode">Mã số thuế</label>
+            <input type="text" id="taxCode" [(ngModel)]="currentCustomer.taxCode" 
+                   name="taxCode" placeholder="VD: 0123456789">
+          </div>
+
+          <!-- Địa chỉ -->
+          <div class="form-group full-width">
+            <label for="address">Địa chỉ</label>
+            <textarea id="address" [(ngModel)]="currentCustomer.address" 
+                      name="address" rows="2" placeholder="VD: 123 Đường ABC, Phường XYZ, Quận 1, TP.HCM"></textarea>
+          </div>
+
+          <!-- Điểm thưởng -->
+          <div class="form-group">
+            <label for="loyaltyPoints">Điểm thưởng</label>
+            <input type="number" id="loyaltyPoints" [(ngModel)]="currentCustomer.loyaltyPoints" 
+                   name="loyaltyPoints" placeholder="0" min="0">
+          </div>
+
+          <!-- Trạng thái -->
+          <div class="form-group">
+            <label for="status">Trạng thái <span class="required">*</span></label>
+            <select id="status" [(ngModel)]="currentCustomer.status" name="status" required>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Ngừng hoạt động</option>
+            </select>
+          </div>
+
+          <!-- Ghi chú -->
+          <div class="form-group full-width">
+            <label for="notes">Ghi chú</label>
+            <textarea id="notes" [(ngModel)]="currentCustomer.notes" 
+                      name="notes" rows="3" placeholder="Ghi chú thêm về khách hàng..."></textarea>
+          </div>
+        </div>
+
+        <div class="dialog-footer">
+          <button type="button" class="btn-cancel" (click)="closeDialog()" [disabled]="isLoading">
+            <i class="fas fa-times"></i>
+            Hủy
+          </button>
+          <button type="submit" class="btn-save" [disabled]="isLoading">
+            <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{ isLoading ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Thêm mới') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

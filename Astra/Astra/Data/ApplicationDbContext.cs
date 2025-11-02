@@ -1,6 +1,7 @@
 ﻿using Backend.Models;
 using Microsoft.EntityFrameworkCore;
 using YourShopManagement.API.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace YourShopManagement.API.Data
 {
@@ -9,6 +10,17 @@ namespace YourShopManagement.API.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
+        }
+        private readonly int _currentShopOwnerId;
+
+        public ApplicationDbContext(
+            DbContextOptions<ApplicationDbContext> options,
+            IHttpContextAccessor httpContextAccessor)
+            : base(options)
+        {
+            var claim = httpContextAccessor.HttpContext?.User?.FindFirst("shop_owner_id")?.Value;
+            if (int.TryParse(claim, out var id))
+                _currentShopOwnerId = id;
         }
 
         // ==================== DbSets cho 13 bảng ====================
@@ -26,6 +38,7 @@ namespace YourShopManagement.API.Data
         public DbSet<Employee> Employees { get; set; }
         public DbSet<PaymentMethod> PaymentMethods { get; set; }
         public DbSet<MomoInfo> MomoInfos { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -93,6 +106,7 @@ namespace YourShopManagement.API.Data
                 b.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
                 b.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
+            modelBuilder.Entity<Supplier>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
 
             // ========================= PRODUCT CATEGORIES =========================
             modelBuilder.Entity<ProductCategory>(b =>
@@ -114,7 +128,7 @@ namespace YourShopManagement.API.Data
                  .HasForeignKey(x => x.ParentCategoryId)
                  .OnDelete(DeleteBehavior.SetNull);
             });
-
+            modelBuilder.Entity<ProductCategory>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
 
             // ========================= PRODUCTS =========================
             modelBuilder.Entity<Product>(b =>
@@ -154,6 +168,7 @@ namespace YourShopManagement.API.Data
                  .HasForeignKey(x => x.CategoryId)
                  .OnDelete(DeleteBehavior.SetNull);
             });
+            modelBuilder.Entity<Product>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
             // ==================== 6. PURCHASE ORDER ====================
             modelBuilder.Entity<PurchaseOrder>(entity =>
             {
@@ -181,7 +196,7 @@ namespace YourShopManagement.API.Data
                     .HasForeignKey(e => e.SupplierId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
-
+            modelBuilder.Entity<PurchaseOrder>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
             // ==================== 7. PURCHASE ORDER DETAIL ====================
             modelBuilder.Entity<PurchaseOrderDetail>(entity =>
             {
@@ -228,6 +243,7 @@ namespace YourShopManagement.API.Data
                     .HasForeignKey(e => e.ProductId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+            modelBuilder.Entity<PriceHistory>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
 
             // ==================== 9. PAYMENT METHOD ====================
             modelBuilder.Entity<PaymentMethod>(entity =>
@@ -245,7 +261,7 @@ namespace YourShopManagement.API.Data
                 entity.HasIndex(e => e.MethodCode).IsUnique();
                 entity.HasIndex(e => e.IsActive);
             });
-
+            modelBuilder.Entity<PaymentMethod>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
             // ==================== 10. CUSTOMER ====================
             modelBuilder.Entity<Customer>(entity =>
             {
@@ -274,7 +290,7 @@ namespace YourShopManagement.API.Data
                 entity.HasIndex(e => e.Segment);
                 entity.HasIndex(e => e.TotalPurchaseAmount);
             });
-
+            modelBuilder.Entity<Customer>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
             // ==================== 11. EMPLOYEE ====================
             modelBuilder.Entity<Employee>(entity =>
             {
@@ -307,7 +323,7 @@ namespace YourShopManagement.API.Data
                     "(username IS NULL) OR (password IS NOT NULL)"
                 ));
             });
-
+            modelBuilder.Entity<Employee>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
             // ==================== 12. INVOICE ====================
             modelBuilder.Entity<Invoice>(entity =>
             {
@@ -348,7 +364,7 @@ namespace YourShopManagement.API.Data
                     .HasForeignKey(e => e.PaymentMethodId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
-
+            modelBuilder.Entity<Invoice>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
             // ==================== 13. INVOICE DETAIL ====================
             modelBuilder.Entity<InvoiceDetail>(entity =>
             {
@@ -375,6 +391,7 @@ namespace YourShopManagement.API.Data
                     .HasForeignKey(e => e.ProductId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+           
             // Cấu hình MomoInfo
             modelBuilder.Entity<MomoInfo>(entity =>
             {
@@ -393,7 +410,41 @@ namespace YourShopManagement.API.Data
                     .WithMany()
                     .HasForeignKey(m => m.PaymentMethodId)
                     .OnDelete(DeleteBehavior.Restrict);
+                
+            }
+             );
+            modelBuilder.Entity<MomoInfo>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
+
+            // ==================== NOTIFICATION ====================
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.HasKey(e => e.NotificationId);
+
+                entity.Property(e => e.Message)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.Type)
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasDefaultValue("info");
+
+                entity.Property(e => e.IsRead)
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.CreatedAt)
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasIndex(e => e.CreatedAt)
+                    .HasDatabaseName("IX_Notifications_CreatedAt");
+
+                entity.HasIndex(e => e.IsRead)
+                    .HasDatabaseName("IX_Notifications_IsRead");
+
+                entity.HasIndex(e => e.UserId)
+                    .HasDatabaseName("IX_Notifications_UserId");
             });
+            modelBuilder.Entity<Notification>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
         }
 
         // ==================== Override SaveChanges để tự động cập nhật UpdatedAt ====================
@@ -425,6 +476,11 @@ namespace YourShopManagement.API.Data
                 {
                     entry.Property("CreatedAt").CurrentValue = DateTime.UtcNow;
                 }
+                if (entry.State == EntityState.Added && entry.Entity.GetType().GetProperty("ShopOwnerId") != null)
+                {
+                    entry.Property("ShopOwnerId").CurrentValue = _currentShopOwnerId;
+                }
+
             }
         }
     }

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using YourShopManagement.API.Data;
 using YourShopManagement.API.DTOs.Auth;
 using YourShopManagement.API.Helpers;
 using YourShopManagement.API.Models;
+using YourShopManagement.API.Services.SmsService;
 
 namespace YourShopManagement.API.Services
 {
@@ -15,17 +17,23 @@ namespace YourShopManagement.API.Services
         Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginDto dto);
         Task<ApiResponse<ShopOwnerInfoDto>> GetProfileAsync(int shopOwnerId);
         Task<ApiResponse<bool>> ChangePasswordAsync(int shopOwnerId, ChangePasswordDto dto);
+        Task<ApiResponse<ForgotPasswordResponseDto>> ForgotPasswordAsync(ForgotPasswordDto dto);
     }
 
     public class AuthService : IAuthService
     {
         private readonly ApplicationDbContext _context;
         private readonly JwtHelper _jwtHelper;
+        private readonly ISmsService _smsService;
 
-        public AuthService(ApplicationDbContext context, JwtHelper jwtHelper)
+        public AuthService(
+            ApplicationDbContext context, 
+            JwtHelper jwtHelper,
+            ISmsService smsService)
         {
             _context = context;
             _jwtHelper = jwtHelper;
+            _smsService = smsService;
         }
 
         /// <summary>
@@ -310,6 +318,102 @@ namespace YourShopManagement.API.Services
                     new List<string> { ex.Message }
                 );
             }
+        }
+
+        /// <summary>
+        /// Quên mật khẩu - Gửi mật khẩu mới về số điện thoại
+        /// </summary>
+        public async Task<ApiResponse<ForgotPasswordResponseDto>> ForgotPasswordAsync(ForgotPasswordDto dto)
+        {
+            try
+            {
+                // 1. Tìm ShopOwner theo số điện thoại
+                var shopOwner = await _context.ShopOwners
+                    .FirstOrDefaultAsync(s => s.Phone == dto.Phone);
+
+                if (shopOwner == null)
+                {
+                    // Không tiết lộ thông tin tài khoản có tồn tại hay không (bảo mật)
+                    return ApiResponse<ForgotPasswordResponseDto>.FailResponse(
+                        "Số điện thoại không tồn tại trong hệ thống",
+                        new List<string> { "Phone number not found" }
+                    );
+                }
+
+                // 2. Kiểm tra trạng thái tài khoản
+                if (shopOwner.Status != "active")
+                {
+                    return ApiResponse<ForgotPasswordResponseDto>.FailResponse(
+                        "Tài khoản đã bị khóa hoặc vô hiệu hóa. Vui lòng liên hệ hỗ trợ.",
+                        new List<string> { "Account is not active" }
+                    );
+                }
+
+                // 3. Tạo mật khẩu mới (8 ký tự: chữ + số)
+                var newPassword = GenerateRandomPassword(8);
+
+                // 4. Gửi mật khẩu mới qua SMS
+                var smsSent = await _smsService.SendNewPasswordAsync(shopOwner.Phone, newPassword);
+
+                if (!smsSent)
+                {
+                    return ApiResponse<ForgotPasswordResponseDto>.FailResponse(
+                        "Không thể gửi SMS. Vui lòng thử lại sau.",
+                        new List<string> { "SMS sending failed" }
+                    );
+                }
+
+                // 5. Cập nhật mật khẩu mới trong database
+                shopOwner.Password = PasswordHelper.HashPassword(newPassword);
+                shopOwner.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                // 6. Trả về response
+                var response = new ForgotPasswordResponseDto
+                {
+                    Success = true,
+                    Message = "Mật khẩu mới đã được gửi về số điện thoại của bạn. Vui lòng kiểm tra tin nhắn SMS.",
+                    Phone = MaskPhoneNumber(shopOwner.Phone),
+                    SentAt = DateTime.UtcNow
+                };
+
+                return ApiResponse<ForgotPasswordResponseDto>.SuccessResponse(
+                    response, 
+                    "Gửi mật khẩu mới thành công"
+                );
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<ForgotPasswordResponseDto>.FailResponse(
+                    "Đã xảy ra lỗi khi xử lý yêu cầu",
+                    new List<string> { ex.Message }
+                );
+            }
+        }
+
+        /// <summary>
+        /// Tạo mật khẩu ngẫu nhiên
+        /// </summary>
+        private string GenerateRandomPassword(int length)
+        {
+            const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghjkmnpqrstuvwxyz";
+            var random = new Random();
+            var password = new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+            
+            return password;
+        }
+
+        /// <summary>
+        /// Che số điện thoại (ví dụ: 0912***678)
+        /// </summary>
+        private string MaskPhoneNumber(string phone)
+        {
+            if (string.IsNullOrEmpty(phone) || phone.Length < 6)
+                return phone;
+
+            return phone.Substring(0, 4) + "***" + phone.Substring(phone.Length - 3);
         }
     }
 }

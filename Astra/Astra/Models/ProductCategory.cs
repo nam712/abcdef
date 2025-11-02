@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -16,6 +15,11 @@ namespace YourShopManagement.API.Models
         [Column("category_id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int CategoryId { get; set; }
+
+        // ✅ THÊM PROPERTY LIÊN KẾT ĐẾN SHOP OWNER
+        [Required]
+        [Column("shop_owner_id")]
+        public int ShopOwnerId { get; set; }
 
         [Required(ErrorMessage = "Tên danh mục không được để trống")]
         [MaxLength(255)]
@@ -40,6 +44,10 @@ namespace YourShopManagement.API.Models
         [Required]
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        // ✅ NAVIGATION PROPERTY LIÊN KẾT VỚI SHOP OWNER
+        [ForeignKey("ShopOwnerId")]
+        public virtual ShopOwner ShopOwner { get; set; } = null!;
 
         // Navigation Properties
         [ForeignKey("ParentCategoryId")]

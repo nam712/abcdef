@@ -1,0 +1,370 @@
+<div class="manufacturer-container">
+  <!-- Header with Navigation -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <h1 class="logo">FeDoan</h1>
+        <button class="mobile-menu-toggle" (click)="toggleMobileMenu()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <nav class="main-nav" [class.mobile-open]="isMobileMenuOpen">
+          <a href="#" class="nav-link" (click)="navigateToDashboard(); $event.preventDefault()">Trang chủ</a>
+
+          <!-- Hàng hóa with submenu -->
+          <div class="nav-item dropdown"
+               (mouseenter)="openProductsSubmenu()"
+               (mouseleave)="closeProductsSubmenu()">
+            <button class="nav-link dropdown-toggle" type="button"
+                    (click)="toggleProductsSubmenu(); $event.stopPropagation()">
+              Hàng hóa <i class="fas fa-caret-down"></i>
+            </button>
+
+            <div class="submenu" [class.open]="productsSubmenuOpen" role="menu" [attr.aria-hidden]="!productsSubmenuOpen">
+              <a href="#" class="nav-link" (click)="navigateToProducts(); $event.preventDefault()">Danh sách Hàng hóa</a>
+              <a href="#" class="nav-link" (click)="navigateToStockIn(); $event.preventDefault()">Nhập kho</a>
+              <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
+              <a href="#" class="nav-link" (click)="navigateToStockOut(); $event.preventDefault()">Xuất kho</a>
+            </div>
+          </div>
+          <a class="nav-link" routerLink="/pos">Bán hàng</a>
+          <a href="#" class="nav-link" (click)="navigateToCustomers(); $event.preventDefault()">Khách hàng</a>
+          <a href="#" class="nav-link" (click)="navigateToEmployees(); $event.preventDefault()">Nhân viên</a>
+          <a href="#" class="nav-link" (click)="navigateToReports(); $event.preventDefault()">Báo cáo</a>
+          <a href="#" class="nav-link active" (click)="$event.preventDefault()">Nhà sản xuất</a>
+          <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
+        </nav>
+      </div>
+      
+      <div class="user-section">
+        <button class="theme-toggle" (click)="changeTheme()" title="Đổi theme">
+          <i class="fas fa-palette"></i>
+          <span>{{ getCurrentThemeLabel() }}</span>
+        </button>
+        
+        <app-notification-bell></app-notification-bell>
+        
+        <div class="user-profile">
+          <img [src]="currentUser.avatar" [alt]="currentUser.name" class="user-avatar">
+          <div class="user-info">
+            <span class="user-name">{{ currentUser.name }}</span>
+            <button class="logout-btn" (click)="logout()" title="Đăng xuất">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Đăng xuất</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-content">
+    <div class="content-layout">
+      <!-- Mobile Filter Toggle Button -->
+      <button class="mobile-filter-toggle" (click)="toggleFilters()" *ngIf="!showFilters">
+        <i class="fas fa-filter"></i>
+        <span>Bộ lọc</span>
+        <span class="filter-count" *ngIf="hasActiveFilters()">{{ getActiveFilterCount() }}</span>
+      </button>
+
+      <!-- Left Sidebar - Filters -->
+      <aside class="filters-sidebar" [class.mobile-show]="showFilters" style="margin-left: -10px;">
+        <div class="filters-header">
+          <h3><i class="fas fa-filter"></i> Bộ lọc</h3>
+          <div class="filters-header-actions">
+            <button class="btn-reset-filter" (click)="resetFilters()" title="Xóa bộ lọc">
+              <i class="fas fa-redo"></i>
+            </button>
+            <button class="btn-close-filter" (click)="toggleFilters()" title="Đóng">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filters-content">
+          <!-- Tìm kiếm -->
+          <div class="filter-group">
+            <label><i class="fas fa-search"></i> Tìm kiếm</label>
+            <input type="text" 
+                   class="filter-input" 
+                   [(ngModel)]="filters.searchText"
+                   (input)="applyFilters()"
+                   placeholder="Tên, mã, email, SĐT...">
+          </div>
+
+          <!-- Trạng thái -->
+          <div class="filter-group">
+            <label><i class="fas fa-toggle-on"></i> Trạng thái</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.status"
+                    (change)="applyFilters()">
+              <option value="">Tất cả</option>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Không hoạt động</option>
+            </select>
+          </div>
+
+          <!-- Thành phố -->
+          <div class="filter-group">
+            <label><i class="fas fa-map-marker-alt"></i> Thành phố</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.city"
+                    (change)="applyFilters()">
+              <option value="">Tất cả</option>
+              <option value="Hà Nội">Hà Nội</option>
+              <option value="TP.HCM">TP. Hồ Chí Minh</option>
+              <option value="Đà Nẵng">Đà Nẵng</option>
+              <option value="Hải Phòng">Hải Phòng</option>
+              <option value="Cần Thơ">Cần Thơ</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+
+          <!-- Có mã số thuế -->
+          <div class="filter-group">
+            <label class="checkbox-label">
+              <input type="checkbox" 
+                     [(ngModel)]="filters.hasTaxCode"
+                     (change)="applyFilters()">
+              <span>Có mã số thuế</span>
+            </label>
+          </div>
+
+          <!-- Có tài khoản ngân hàng -->
+          <div class="filter-group">
+            <label class="checkbox-label">
+              <input type="checkbox" 
+                     [(ngModel)]="filters.hasBankAccount"
+                     (change)="applyFilters()">
+              <span>Có tài khoản ngân hàng</span>
+            </label>
+          </div>
+
+          <!-- Sắp xếp -->
+          <div class="filter-group">
+            <label><i class="fas fa-sort"></i> Sắp xếp theo</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.sortBy"
+                    (change)="applyFilters()">
+              <option value="name-asc">Tên A-Z</option>
+              <option value="name-desc">Tên Z-A</option>
+              <option value="code-asc">Mã tăng dần</option>
+              <option value="code-desc">Mã giảm dần</option>
+              <option value="newest">Mới nhất</option>
+              <option value="oldest">Cũ nhất</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Summary -->
+        <div class="filter-summary">
+          <p><strong>{{ filteredSuppliers.length }}</strong> / {{ suppliers.length }} nhà cung cấp</p>
+        </div>
+      </aside>
+
+      <!-- Overlay for mobile filters -->
+      <div class="filters-overlay" 
+           [class.active]="showFilters" 
+           (click)="toggleFilters()"></div>
+
+      <!-- Right Content Area -->
+      <div class="content-area">
+        <div class="content-header">
+          <h2>Quản lý Nhà sản xuất</h2>
+          <button class="btn-add-new" (click)="openAddDialog()" [disabled]="isLoading">
+            <i class="fas fa-plus"></i>
+            <span>Thêm mới</span>
+          </button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-container" *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Đang tải dữ liệu...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" *ngIf="errorMessage && !isLoading">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Manufacturers Table -->
+        <div class="table-container" *ngIf="!isLoading">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã NCC</th>
+                <th>Tên nhà cung cấp</th>
+                <th>Người liên hệ</th>
+                <th>Số điện thoại</th>
+                <th>Email</th>
+                <th>Địa chỉ</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngIf="filteredSuppliers && filteredSuppliers.length > 0; else noData">
+                <tr *ngFor="let supplier of filteredSuppliers; trackBy: trackBySupplierCode">
+                  <td>{{ supplier.supplierCode }}</td>
+                  <td>{{ supplier.supplierName }}</td>
+                  <td>{{ supplier.contactPerson }}</td>
+                  <td>{{ supplier.phone }}</td>
+                  <td>{{ supplier.email }}</td>
+                  <td class="address-cell" [title]="supplier.address">{{ supplier.address }}</td>
+                  <td>
+                    <span class="status-badge" [ngClass]="supplier.status">
+                      {{ supplier.status === 'active' ? 'Hoạt động' : 'Không hoạt động' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-action btn-view" (click)="viewSupplier(supplier)" title="Xem chi tiết" [disabled]="isLoading">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="btn-action btn-edit" (click)="editSupplier(supplier)" title="Chỉnh sửa" [disabled]="isLoading">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn-action btn-delete" (click)="deleteSupplier(supplier)" title="Xóa" [disabled]="isLoading">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+              <ng-template #noData>
+                <tr>
+                  <td colspan="8" class="no-data">
+                    <i class="fas fa-inbox"></i>
+                    <p>{{ filters.searchText ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có dữ liệu nhà sản xuất' }}</p>
+                  </td>
+                </tr>
+              </ng-template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add/Edit Supplier Dialog -->
+  <div class="dialog-overlay" [class.active]="showDialog" (click)="closeDialog()">
+    <div class="dialog-container" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h3>{{ isEditMode ? 'Chỉnh sửa nhà sản xuất' : 'Thêm nhà sản xuất mới' }}</h3>
+        <button class="btn-close" (click)="closeDialog()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Error Message in Dialog -->
+      <div class="dialog-error" *ngIf="errorMessage">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <form class="dialog-form" (ngSubmit)="saveSupplier()">
+        <div class="form-grid">
+          <!-- Mã NCC -->
+          <div class="form-group">
+            <label for="supplierCode">Mã nhà cung cấp <span class="required">*</span></label>
+            <input type="text" id="supplierCode" [(ngModel)]="currentSupplier.supplierCode" 
+                   name="supplierCode" placeholder="VD: a1b2c3d4" required readonly maxlength="8">
+            <small class="form-hint">Mã sẽ được tạo tự động (8 ký tự)</small>
+          </div>
+
+          <!-- Tên NCC -->
+          <div class="form-group">
+            <label for="supplierName">Tên nhà cung cấp <span class="required">*</span></label>
+            <input type="text" id="supplierName" [(ngModel)]="currentSupplier.supplierName" 
+                   name="supplierName" placeholder="Nhập tên nhà cung cấp" required>
+          </div>
+
+          <!-- Người liên hệ -->
+          <div class="form-group">
+            <label for="contactPerson">Người liên hệ <span class="required">*</span></label>
+            <input type="text" id="contactPerson" [(ngModel)]="currentSupplier.contactPerson" 
+                   name="contactPerson" placeholder="Nhập tên người liên hệ" required>
+          </div>
+
+          <!-- Số điện thoại -->
+          <div class="form-group">
+            <label for="phone">Số điện thoại <span class="required">*</span></label>
+            <input type="tel" id="phone" [(ngModel)]="currentSupplier.phone" 
+                   name="phone" placeholder="VD: 02633556789" required>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group full-width">
+            <label for="email">Email <span class="required">*</span></label>
+            <input type="email" id="email" [(ngModel)]="currentSupplier.email" 
+                   name="email" placeholder="VD: sales@example.com" required>
+          </div>
+
+          <!-- Địa chỉ -->
+          <div class="form-group full-width">
+            <label for="address">Địa chỉ <span class="required">*</span></label>
+            <textarea id="address" [(ngModel)]="currentSupplier.address" 
+                      name="address" rows="2" placeholder="Nhập địa chỉ đầy đủ" required></textarea>
+          </div>
+
+          <!-- Mã số thuế -->
+          <div class="form-group">
+            <label for="taxCode">Mã số thuế</label>
+            <input type="text" id="taxCode" [(ngModel)]="currentSupplier.taxCode" 
+                   name="taxCode" placeholder="VD: 0123456789">
+          </div>
+
+          <!-- Tài khoản ngân hàng -->
+          <div class="form-group">
+            <label for="bankAccount">Tài khoản ngân hàng</label>
+            <input type="text" id="bankAccount" [(ngModel)]="currentSupplier.bankAccount" 
+                   name="bankAccount" placeholder="Nhập số tài khoản">
+          </div>
+
+          <!-- Tên ngân hàng -->
+          <div class="form-group full-width">
+            <label for="bankName">Tên ngân hàng</label>
+            <input type="text" id="bankName" [(ngModel)]="currentSupplier.bankName" 
+                   name="bankName" placeholder="VD: Ngân hàng Vietcombank - Chi nhánh Hà Nội">
+          </div>
+
+          <!-- Bảng giá -->
+          <div class="form-group">
+            <label for="priceList">Bảng giá</label>
+            <input type="text" id="priceList" [(ngModel)]="currentSupplier.priceList" 
+                   name="priceList" placeholder="VD: Bảng giá tháng 10/2025">
+          </div>
+
+          <!-- Trạng thái -->
+          <div class="form-group">
+            <label for="status">Trạng thái <span class="required">*</span></label>
+            <select id="status" [(ngModel)]="currentSupplier.status" name="status" required>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Không hoạt động</option>
+            </select>
+          </div>
+
+          <!-- Ghi chú -->
+          <div class="form-group full-width">
+            <label for="notes">Ghi chú</label>
+            <textarea id="notes" [(ngModel)]="currentSupplier.notes" 
+                      name="notes" rows="3" placeholder="Nhập ghi chú (nếu có)"></textarea>
+          </div>
+        </div>
+
+        <div class="dialog-footer">
+          <button type="button" class="btn-cancel" (click)="closeDialog()" [disabled]="isLoading">
+            <i class="fas fa-times"></i>
+            Hủy
+          </button>
+          <button type="submit" class="btn-save" [disabled]="isLoading">
+            <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{ isLoading ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Thêm mới') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

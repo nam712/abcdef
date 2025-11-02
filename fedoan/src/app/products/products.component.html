@@ -1,0 +1,481 @@
+<div class="products-container">
+  <!-- Header with Navigation -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <h1 class="logo">FeDoan</h1>
+        <button class="mobile-menu-toggle" (click)="toggleMobileMenu()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <nav class="main-nav" [class.mobile-open]="isMobileMenuOpen">
+          <a href="#" class="nav-link" (click)="navigateToDashboard(); $event.preventDefault()">Trang chủ</a>
+
+          <!-- Hàng hóa with submenu -->
+          <div class="nav-item dropdown"
+               (mouseenter)="openProductsSubmenu()"
+               (mouseleave)="closeProductsSubmenu()">
+            <button class="nav-link dropdown-toggle active" type="button"
+                    (click)="toggleProductsSubmenu(); $event.stopPropagation()">
+              Hàng hóa <i class="fas fa-caret-down"></i>
+            </button>
+
+            <div class="submenu" [class.open]="productsSubmenuOpen" role="menu" [attr.aria-hidden]="!productsSubmenuOpen">
+              <a href="#" class="nav-link active" (click)="navigateToProducts(); $event.preventDefault()">Danh sách Hàng hóa</a>
+              <a href="#" class="nav-link" (click)="navigateToStockIn(); $event.preventDefault()">Nhập kho</a>
+              <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
+              <a href="#" class="nav-link" (click)="navigateToStockOut(); $event.preventDefault()">Xuất kho</a>
+            </div>
+          </div>
+
+          <a class="nav-link" routerLink="/pos">Bán hàng</a>
+          <a href="#" class="nav-link" (click)="navigateToCustomers(); $event.preventDefault()">Khách hàng</a>
+          <a href="#" class="nav-link" (click)="navigateToEmployees(); $event.preventDefault()">Nhân viên</a>
+          <a href="#" class="nav-link" (click)="navigateToReports(); $event.preventDefault()">Báo cáo</a>
+          <a href="#" class="nav-link" (click)="navigateToManufacturers(); $event.preventDefault()">Nhà sản xuất</a>
+          <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
+        </nav>
+      </div>
+      
+      <div class="user-section">
+        <button class="theme-toggle" (click)="changeTheme()" title="Đổi theme">
+          <i class="fas fa-palette"></i>
+          <span>{{ getCurrentThemeLabel() }}</span>
+        </button>
+        
+        <app-notification-bell></app-notification-bell>
+        
+        <div class="user-profile">
+          <img [src]="currentUser.avatar" [alt]="currentUser.name" class="user-avatar">
+          <div class="user-info">
+            <span class="user-name">{{ currentUser.name }}</span>
+            <button class="logout-btn" (click)="logout()" title="Đăng xuất">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Đăng xuất</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-content">
+    <div class="content-layout">
+      <!-- Mobile Filter Toggle Button -->
+      <button class="mobile-filter-toggle" (click)="toggleFilters()" *ngIf="!showFilters">
+        <i class="fas fa-filter"></i>
+        <span>Bộ lọc</span>
+        <span class="filter-count" *ngIf="hasActiveFilters()">{{ getActiveFilterCount() }}</span>
+      </button>
+
+      <!-- Left Sidebar - Filters -->
+      <aside class="filters-sidebar" [class.mobile-show]="showFilters">
+        <div class="filters-header">
+          <h3><i class="fas fa-filter"></i> Bộ lọc</h3>
+          <div class="filters-header-actions">
+            <button class="btn-reset-filter" (click)="resetFilters()" title="Xóa bộ lọc">
+              <i class="fas fa-redo"></i>
+            </button>
+            <button class="btn-close-filter" (click)="toggleFilters()" title="Đóng">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filters-content">
+          <!-- Tìm kiếm -->
+          <div class="filter-group">
+            <label><i class="fas fa-search"></i> Tìm kiếm</label>
+            <input type="text" 
+                   class="filter-input" 
+                   [(ngModel)]="filters.searchText"
+                   (input)="applyFilters()"
+                   placeholder="Tên, mã, danh mục...">
+          </div>
+
+          <!-- Danh mục -->
+          <div class="filter-group">
+            <label><i class="fas fa-tags"></i> Danh mục</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.category"
+                    (change)="applyFilters()">
+              <option value="">Tất cả</option>
+              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+            </select>
+          </div>
+
+          <!-- Trạng thái -->
+          <div class="filter-group">
+            <label><i class="fas fa-toggle-on"></i> Trạng thái</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.status"
+                    (change)="applyFilters()">
+              <option value="">Tất cả</option>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Ngừng kinh doanh</option>
+            </select>
+          </div>
+
+          <!-- Mức tồn kho -->
+          <div class="filter-group">
+            <label><i class="fas fa-boxes"></i> Tồn kho</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.stockLevel"
+                    (change)="applyFilters()">
+              <option value="">Tất cả</option>
+              <option value="low">Thấp (< Min)</option>
+              <option value="normal">Bình thường</option>
+              <option value="high">Cao (> Max)</option>
+            </select>
+          </div>
+
+          <!-- Sắp xếp -->
+          <div class="filter-group">
+            <label><i class="fas fa-sort"></i> Sắp xếp theo</label>
+            <select class="filter-select" 
+                    [(ngModel)]="filters.sortBy"
+                    (change)="applyFilters()">
+              <option value="name-asc">Tên A-Z</option>
+              <option value="name-desc">Tên Z-A</option>
+              <option value="price-asc">Giá thấp → cao</option>
+              <option value="price-desc">Giá cao → thấp</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Summary -->
+        <div class="filter-summary">
+          <p><strong>{{ filteredProducts.length }}</strong> / {{ products.length }} sản phẩm</p>
+        </div>
+      </aside>
+
+      <!-- Overlay for mobile filters -->
+      <div class="filters-overlay" 
+           [class.active]="showFilters" 
+           (click)="toggleFilters()"></div>
+
+      <!-- Right Content Area -->
+      <div class="content-area">
+        <div class="content-header">
+          <h2>Quản lý Hàng hóa</h2>
+          <button class="btn-add-new" (click)="openAddDialog()" [disabled]="isLoading">
+            <i class="fas fa-plus"></i>
+            <span>Thêm sản phẩm</span>
+          </button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-container" *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Đang tải dữ liệu...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" *ngIf="errorMessage && !isLoading">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Products Table -->
+        <div class="table-container" *ngIf="!isLoading">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Hình ảnh</th>
+                <th>Tên sản phẩm</th>
+                <th>Danh mục</th>
+                <th>Đơn vị</th>
+                <th>Giá</th>
+                <th>Số lượng</th>
+                <th>Tồn kho</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngIf="filteredProducts && filteredProducts.length > 0; else noData">
+                <tr *ngFor="let product of filteredProducts; trackBy: trackByProductCode">
+                  <td>
+                    <img *ngIf="product.imageUrl"
+                         [src]="getImageUrl(product.imageUrl)"
+                         alt="Ảnh sản phẩm"
+                         style="width:56px;height:56px;object-fit:cover;border-radius:8px;">
+                  </td>
+                  <td><strong>{{ product.productName }}</strong></td>
+                  <td>{{ getCategoryName(product.categoryId) }}</td>
+                  <td>{{ product.unit }}</td>
+                  <td class="price-cell">{{ product.price.toLocaleString('vi-VN') }} ₫</td>
+                  <td class="quantity-cell">{{ product.stock }}</td>
+                  <td>
+                    <span class="stock-badge" [ngClass]="getStockStatus(product)">
+                      <i class="fas" [ngClass]="{
+                        'fa-arrow-down': getStockStatus(product) === 'low',
+                        'fa-check': getStockStatus(product) === 'normal',
+                        'fa-arrow-up': getStockStatus(product) === 'high'
+                      }"></i>
+                      {{ getStockStatus(product) === 'low' ? 'Thấp' : 
+                         getStockStatus(product) === 'high' ? 'Cao' : 'Bình thường' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="status-badge" [ngClass]="product.status">
+                      {{ product.status === 'active' ? 'Hoạt động' : 'Ngừng KD' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-action btn-view" (click)="viewProduct(product)" title="Xem chi tiết" [disabled]="isLoading">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="btn-action btn-edit" (click)="editProduct(product)" title="Chỉnh sửa" [disabled]="isLoading">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn-action btn-delete" (click)="deleteProduct(product)" title="Xóa" [disabled]="isLoading">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+              <ng-template #noData>
+                <tr>
+                  <td colspan="9" class="no-data">
+                    <i class="fas fa-inbox"></i>
+                    <p>{{ filters.searchText ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có dữ liệu sản phẩm' }}</p>
+                  </td>
+                </tr>
+              </ng-template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add/Edit Product Dialog -->
+  <div class="dialog-overlay" [class.active]="showDialog" (click)="closeDialog()">
+    <div class="dialog-container" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h3>{{ isEditMode ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới' }}</h3>
+        <button class="btn-close" (click)="closeDialog()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Error Message in Dialog -->
+      <div class="dialog-error" *ngIf="errorMessage">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <form class="dialog-form" (ngSubmit)="saveProduct()">
+        <div class="form-grid">
+          <!-- Mã SP -->
+          <div class="form-group">
+            <label for="productCode">Mã sản phẩm <span class="required">*</span></label>
+            <input type="text" id="productCode" [(ngModel)]="currentProduct.productCode" 
+                   name="productCode" placeholder="VD: a1b2c3d4" required readonly maxlength="8">
+            <small class="form-hint">Mã sẽ được tạo tự động (8 ký tự)</small>
+          </div>
+
+          <!-- SKU -->
+          <div class="form-group">
+            <label for="sku">SKU <span class="required">*</span></label>
+            <input type="text" id="sku" [(ngModel)]="currentProduct.sku" 
+                   name="sku" placeholder="VD: IP15PM-256-BLACK" required>
+          </div>
+
+          <!-- Tên SP -->
+          <div class="form-group full-width">
+            <label for="productName">Tên sản phẩm <span class="required">*</span></label>
+            <input type="text" id="productName" [(ngModel)]="currentProduct.productName" 
+                   name="productName" placeholder="VD: Điện thoại iPhone 15 Pro Max 256GB" required>
+          </div>
+
+          <!-- Danh mục -->
+          <div class="form-group">
+            <label for="categoryId">Danh mục <span class="required">*</span></label>
+            <div class="input-with-button">
+              <select id="categoryId" [(ngModel)]="currentProduct.categoryId" name="categoryId" required>
+                <option value="0">-- Chọn danh mục --</option>
+                <option *ngFor="let cat of categories" [value]="cat.categoryId">{{ cat.categoryName }}</option>
+              </select>
+              <button type="button" class="btn-add-category" (click)="openCategoryDialog()" title="Thêm danh mục mới">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Thương hiệu -->
+          <div class="form-group">
+            <label for="brand">Thương hiệu</label>
+            <input type="text" id="brand" [(ngModel)]="currentProduct.brand" 
+                   name="brand" placeholder="VD: Apple, Samsung...">
+          </div>
+
+          <!-- Nhà cung cấp -->
+          <div class="form-group full-width">
+            <label for="supplierId">Nhà cung cấp <span class="required">*</span></label>
+            <div class="input-with-button">
+              <select id="supplierId" [(ngModel)]="currentProduct.supplierId" name="supplierId" required>
+                <option value="0">-- Chọn nhà cung cấp --</option>
+                <option *ngFor="let sup of suppliers" [value]="sup.supplierId">
+                  {{ sup.supplierName }} ({{ sup.supplierCode }})
+                </option>
+              </select>
+              <button type="button" 
+                      class="btn-add-supplier" 
+                      (click)="navigateToManufacturers()" 
+                      title="Quản lý nhà cung cấp">
+                <i class="fas fa-external-link-alt"></i>
+              </button>
+            </div>
+            <small class="form-hint" *ngIf="suppliers.length === 0">
+              Đang tải danh sách nhà cung cấp...
+            </small>
+            <small class="form-hint" *ngIf="suppliers.length > 0">
+              {{ suppliers.length }} nhà cung cấp có sẵn
+            </small>
+          </div>
+
+          <!-- Giá vốn -->
+          <div class="form-group">
+            <label for="costPrice">Giá vốn <span class="required">*</span></label>
+            <input type="number" id="costPrice" [(ngModel)]="currentProduct.costPrice" 
+                   name="costPrice" placeholder="VD: 31000000" required min="0">
+          </div>
+
+          <!-- Giá bán -->
+          <div class="form-group">
+            <label for="price">Giá bán <span class="required">*</span></label>
+            <input type="number" id="price" [(ngModel)]="currentProduct.price" 
+                   name="price" placeholder="VD: 34990000" required min="0">
+          </div>
+
+          <!-- Số lượng tồn -->
+          <div class="form-group">
+            <label for="stock">Số lượng tồn kho <span class="required">*</span></label>
+            <input type="number" id="stock" [(ngModel)]="currentProduct.stock" 
+                   name="stock" placeholder="VD: 120" required min="0">
+          </div>
+
+          <!-- Tồn kho tối thiểu -->
+          <div class="form-group">
+            <label for="minStock">Tồn kho tối thiểu <span class="required">*</span></label>
+            <input type="number" id="minStock" [(ngModel)]="currentProduct.minStock" 
+                   name="minStock" placeholder="VD: 10" required min="0">
+          </div>
+
+          <!-- Đơn vị -->
+          <div class="form-group">
+            <label for="unit">Đơn vị tính <span class="required">*</span></label>
+            <select id="unit" [(ngModel)]="currentProduct.unit" name="unit" required>
+              <option *ngFor="let u of units" [value]="u">{{ u }}</option>
+            </select>
+          </div>
+
+          <!-- Barcode -->
+          <div class="form-group">
+            <label for="barcode">Mã vạch (Barcode)</label>
+            <input type="text" id="barcode" [(ngModel)]="currentProduct.barcode" 
+                   name="barcode" placeholder="VD: 8934567890123">
+          </div>
+
+          <!-- Khối lượng -->
+          <div class="form-group">
+            <label for="weight">Khối lượng (kg)</label>
+            <input type="number" id="weight" [(ngModel)]="currentProduct.weight" 
+                   name="weight" placeholder="VD: 0.24" min="0" step="0.01">
+          </div>
+
+          <!-- Kích thước -->
+          <div class="form-group">
+            <label for="dimension">Kích thước</label>
+            <input type="text" id="dimension" [(ngModel)]="currentProduct.dimension" 
+                   name="dimension" placeholder="VD: 160.7 x 77.6 x 7.8 mm">
+          </div>
+
+          <!-- URL hình ảnh -->
+          <div class="form-group full-width">
+            <label for="imageUrl">Hình ảnh sản phẩm</label>
+            <input type="file" id="imageUrl" accept="image/*"
+                   (change)="onImageFileChange($event)" name="imageUrl">
+            <div *ngIf="currentProduct.imageUrl" class="image-preview">
+              <img [src]="currentProduct.imageUrl" alt="Preview" style="max-width:120px;max-height:120px;border-radius:8px;margin-top:8px;">
+            </div>
+          </div>
+
+          <!-- Mô tả -->
+          <div class="form-group full-width">
+            <label for="description">Mô tả sản phẩm</label>
+            <textarea id="description" [(ngModel)]="currentProduct.description" 
+                      name="description" rows="2" placeholder="VD: Điện thoại cao cấp của Apple..."></textarea>
+          </div>
+
+          <!-- Ghi chú -->
+          <div class="form-group full-width">
+            <label for="notes">Ghi chú</label>
+            <textarea id="notes" [(ngModel)]="currentProduct.notes" 
+                      name="notes" rows="2" placeholder="VD: Hàng chính hãng, bảo hành 12 tháng"></textarea>
+          </div>
+
+          <!-- Trạng thái -->
+          <div class="form-group">
+            <label for="status">Trạng thái <span class="required">*</span></label>
+            <select id="status" [(ngModel)]="currentProduct.status" name="status" required>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Ngừng kinh doanh</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="dialog-footer">
+          <button type="button" class="btn-cancel" (click)="closeDialog()" [disabled]="isLoading">
+            <i class="fas fa-times"></i>
+            Hủy
+          </button>
+          <button type="submit" class="btn-save" [disabled]="isLoading">
+            <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{ isLoading ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Thêm mới') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Category Dialog -->
+  <div class="dialog-overlay" [class.active]="showCategoryDialog" (click)="closeCategoryDialog()">
+    <div class="dialog-container small-dialog" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h3>Thêm danh mục mới</h3>
+        <button class="btn-close" (click)="closeCategoryDialog()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form class="dialog-form" (ngSubmit)="saveCategory()">
+        <div class="form-group">
+          <label for="categoryName">Tên danh mục <span class="required">*</span></label>
+          <input type="text" 
+                 id="categoryName" 
+                 [(ngModel)]="newCategoryName" 
+                 name="categoryName" 
+                 placeholder="VD: Thực phẩm, Đồ uống..." 
+                 required
+                 autofocus>
+        </div>
+
+        <div class="dialog-footer">
+          <button type="button" class="btn-cancel" (click)="closeCategoryDialog()">
+            <i class="fas fa-times"></i>
+            Hủy
+          </button>
+          <button type="submit" class="btn-save" [disabled]="!newCategoryName || newCategoryName.trim() === ''">
+            <i class="fas fa-plus"></i>
+            Thêm danh mục
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

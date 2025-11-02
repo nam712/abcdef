@@ -20,15 +20,19 @@
             </button>
 
             <div class="submenu" [class.open]="productsSubmenuOpen" role="menu" [attr.aria-hidden]="!productsSubmenuOpen">
-              <a href="#" class="nav-link" (click)="navigateToProducts(); $event.preventDefault()">Danh sách Hàng hóa</a>
-              <a href="#" class="nav-link" (click)="navigateToStockIn(); $event.preventDefault()">Nhập kho</a>
-              <a href="#" class="nav-link" (click)="navigateToStockOut(); $event.preventDefault()">Xuất kho</a>
+              <a routerLink="/products" class="nav-link" (click)="closeMobileMenu(); closeProductsSubmenu()">Danh sách Hàng hóa</a>
+              <a routerLink="/stock-in" class="nav-link" (click)="closeMobileMenu(); closeProductsSubmenu()">Nhập kho</a>
+              <a routerLink="/stock-out" class="nav-link" (click)="closeMobileMenu(); closeProductsSubmenu()">Xuất kho</a>
             </div>
           </div>
 
-          <a href="#" class="nav-link" (click)="navigateToEmployees()">Nhân viên</a>
-          <a href="#" class="nav-link" (click)="navigateToReports()">Báo cáo</a>
-          <a href="#" class="nav-link" (click)="navigateToManufacturers()">Nhà sản xuất</a>
+          <a href="#" class="nav-link" routerLink="/pos" (click)="closeMobileMenu()">Bán hàng</a>
+         
+          <a href="#" class="nav-link" (click)="navigateToCustomers(); $event.preventDefault()">Khách hàng</a>
+          <a href="#" class="nav-link" (click)="navigateToEmployees(); $event.preventDefault()">Nhân viên</a>
+          <a href="#" class="nav-link" (click)="navigateToReports(); $event.preventDefault()">Báo cáo</a>
+          <a href="#" class="nav-link" (click)="navigateToManufacturers(); $event.preventDefault()">Nhà sản xuất</a>
+          <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
         </nav>
       </div>
       
@@ -38,10 +42,7 @@
           <span>{{ getCurrentThemeLabel() }}</span>
         </button>
         
-        <div class="notifications">
-          <i class="fas fa-bell"></i>
-          <span class="notification-badge">3</span>
-        </div>
+        <app-notification-bell></app-notification-bell>
         
         <div class="user-profile">
           <img [src]="currentUser.avatar" [alt]="currentUser.name" class="user-avatar">

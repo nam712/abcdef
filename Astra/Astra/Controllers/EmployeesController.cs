@@ -1,6 +1,7 @@
 ﻿using Backend.DTOs;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization; 
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "ShopOwner")]
     public class EmployeesController : ControllerBase
     {
         private readonly IEmployeeService _service;

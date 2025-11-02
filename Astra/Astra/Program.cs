@@ -13,6 +13,7 @@ using Backend.Repositories;
 using Backend.Services;
 using YourShopManagement.API.Repositories;
 using Backend.Mappings;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -102,20 +103,29 @@ builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddAutoMapper(typeof(EntityMappingProfile));
 // Helpers
 builder.Services.AddScoped<JwtHelper>();
+builder.Services.AddHttpContextAccessor();
 
 // Repositories
 builder.Services.AddScoped<YourShopManagement.API.Repositories.ISupplierRepository, YourShopManagement.API.Repositories.SupplierRepository>();
 builder.Services.AddScoped<YourShopManagement.API.Repositories.ICustomerRepository, YourShopManagement.API.Repositories.CustomerRepository>();
 builder.Services.AddScoped<YourShopManagement.API.Repositories.IProductRepository, YourShopManagement.API.Repositories.ProductRepository>();
 builder.Services.AddScoped<YourShopManagement.API.Repositories.IProductCategoryRepository, YourShopManagement.API.Repositories.ProductCategoryRepository>();
+builder.Services.AddScoped<YourShopManagement.API.Repositories.IPurchaseOrderRepository, YourShopManagement.API.Repositories.PurchaseOrderRepository>();
 
 
 // Services
+builder.Services.AddHttpClient<YourShopManagement.API.Services.SmsService.ISmsService, YourShopManagement.API.Services.SmsService.SmsService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
+
+// PurchaseOrder service registration (register interface -> implementation)
+builder.Services.AddScoped<YourShopManagement.API.Services.IPurchaseOrderService, YourShopManagement.API.Services.PurchaseOrderService>();
+
+// Đăng ký Invoice service (sửa lỗi: Unable to resolve IInvoiceService khi khởi tạo InvoicesController)
+builder.Services.AddScoped<YourShopManagement.API.Services.Interfaces.IInvoiceService, YourShopManagement.API.Services.InvoiceService.InvoiceService>();
 
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
@@ -125,11 +135,10 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
 builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
-builder.Services.AddScoped<YourShopManagement.API.Services.Interfaces.IInvoiceService, YourShopManagement.API.Services.InvoiceService.InvoiceService>();
 
-builder.Services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
-builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
-
+// Notification
+builder.Services.AddScoped<Backend.Repositories.INotificationRepository, Backend.Repositories.NotificationRepository>();
+builder.Services.AddScoped<Backend.Services.NotificationService.INotificationService, Backend.Services.NotificationService.NotificationService>();
 
 // ==================== 5. SWAGGER ====================
 builder.Services.AddEndpointsApiExplorer();
@@ -174,7 +183,16 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin()     // Cho phép mọi domain
+                  .AllowAnyHeader()     // Cho phép mọi header
+                  .AllowAnyMethod();    // Cho phép mọi phương thức (GET, POST, PUT, DELETE...)
+        });
+});
 // ==================== BUILD APP ====================
 var app = builder.Build();
 
@@ -184,19 +202,33 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseCors("AllowAll");
 // ⚠️ IMPORTANT: CORS phải đặt trước UseAuthentication
 app.UseCors("AllowAngular");
-
-// ✅ Cho phép truy cập ảnh trong wwwroot
-app.UseStaticFiles();
 
 // Tạm thời tắt HTTPS redirect để test
 // app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseStaticFiles(); // Phục vụ wwwroot mặc định
+
+// Đảm bảo thư mục uploads tồn tại
+var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
+
+// Cấu hình phục vụ thư mục uploads
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
 
 app.MapControllers();
+
 
 // Log để biết server đang chạy
 Console.WriteLine("========================================");

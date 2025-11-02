@@ -2,11 +2,13 @@
 using Services;
 using ProductCategoryApi.DTOs;
 using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Authorization; 
 
 namespace ProductCategoryApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "ShopOwner")]
     public class ProductCategoryController : ControllerBase
     {
         private readonly IProductCategoryService _service;
