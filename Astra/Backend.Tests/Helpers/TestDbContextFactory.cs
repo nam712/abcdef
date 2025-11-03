@@ -1,9 +1,16 @@
 ﻿using System;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using YourShopManagement.API.Data;
 
 namespace Backend.Tests
 {
+    // Mock IHttpContextAccessor cho testing
+    internal class MockHttpContextAccessor : IHttpContextAccessor
+    {
+        public HttpContext? HttpContext { get; set; }
+    }
+
     // Factory để tạo InMemory ApplicationDbContext tái sử dụng trong unit tests
     public static class TestDbContextFactory
     {
@@ -14,7 +21,10 @@ namespace Backend.Tests
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase(name)
                 .Options;
-            var context = new ApplicationDbContext(options);
+            
+            // Tạo mock IHttpContextAccessor cho testing
+            var httpContextAccessor = new MockHttpContextAccessor();
+            var context = new ApplicationDbContext(options, httpContextAccessor);
             context.Database.EnsureCreated();
             return context;
         }

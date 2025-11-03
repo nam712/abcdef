@@ -33,6 +33,7 @@ namespace YourShopManagement.API.Helpers
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, shopOwner.ShopOwnerId.ToString()),
+                new Claim("shop_owner_id", shopOwner.ShopOwnerId.ToString()), // ✅ QUAN TRỌNG: Claim cho multi-tenant
                 new Claim(JwtRegisteredClaimNames.Name, shopOwner.ShopOwnerName),
                 new Claim(JwtRegisteredClaimNames.Email, shopOwner.Email ?? ""),
                 new Claim("phone", shopOwner.Phone),

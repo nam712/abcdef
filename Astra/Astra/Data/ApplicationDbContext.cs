@@ -7,12 +7,9 @@ namespace YourShopManagement.API.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
         private readonly int _currentShopOwnerId;
 
+        // Constructor với IHttpContextAccessor - được DI sử dụng
         public ApplicationDbContext(
             DbContextOptions<ApplicationDbContext> options,
             IHttpContextAccessor httpContextAccessor)
@@ -21,6 +18,8 @@ namespace YourShopManagement.API.Data
             var claim = httpContextAccessor.HttpContext?.User?.FindFirst("shop_owner_id")?.Value;
             if (int.TryParse(claim, out var id))
                 _currentShopOwnerId = id;
+            else
+                _currentShopOwnerId = 0; // Default value
         }
 
         // ==================== DbSets cho 13 bảng ====================
