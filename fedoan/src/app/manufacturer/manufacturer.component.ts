@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { SupplierService, Supplier } from '../services/supplier.service';
 import { NotificationBellComponent } from '../shared/notification-bell/notification-bell.component';
 import { NotificationService } from '../services/notification.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-manufacturer',
@@ -56,7 +57,8 @@ export class ManufacturerComponent implements OnInit {
   constructor(
     private router: Router,
     private supplierService: SupplierService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -147,10 +149,12 @@ export class ManufacturerComponent implements OnInit {
   }
 
   navigateToCustomers(): void {
+    this.closeMobileMenu();
     this.router.navigate(['/customers']);
   }
 
   logout(): void {
+    this.authService.logout();
     this.router.navigate(['/login']);
   }
 
@@ -509,10 +513,53 @@ Ghi chú: ${supplier.notes || 'Không có'}
     this.errorMessage = '';
     this.isLoading = true;
 
+    const token = this.authService.getToken();
+    console.log('🔑 Current token:', token ? 'exists' : 'not found');
+    
+    if (!token) {
+      this.errorMessage = 'Không tìm thấy token. Vui lòng đăng nhập lại.';
+      this.isLoading = false;
+      setTimeout(() => this.router.navigate(['/login']), 2000);
+      return;
+    }
+
+    const decoded = this.authService.decodeToken();
+    console.log('🔓 Decoded token:', decoded);
+
+    const shopOwnerId = this.authService.getShopOwnerId();
+    console.log('🏪 Shop Owner ID:', shopOwnerId);
+    
+    if (!shopOwnerId) {
+      this.errorMessage = 'Không tìm thấy thông tin shop_owner_id trong token. Vui lòng đăng nhập lại.';
+      this.isLoading = false;
+      setTimeout(() => this.router.navigate(['/login']), 2000);
+      return;
+    }
+
+    // Clean data - remove extra fields
+    const supplierData: any = {
+      supplierCode: this.currentSupplier.supplierCode,
+      supplierName: this.currentSupplier.supplierName,
+      contactPerson: this.currentSupplier.contactPerson || '',
+      phone: this.currentSupplier.phone,
+      email: this.currentSupplier.email || '',
+      address: this.currentSupplier.address || '',
+      taxCode: this.currentSupplier.taxCode || '',
+      bankAccount: this.currentSupplier.bankAccount || '',
+      bankName: this.currentSupplier.bankName || '',
+      priceList: this.currentSupplier.priceList || '',
+      logoUrl: this.currentSupplier.logoUrl || null,
+      status: this.currentSupplier.status || 'active',
+      notes: this.currentSupplier.notes || '',
+      shop_owner_id: parseInt(shopOwnerId, 10) // Convert to number
+    };
+
+    console.log('📦 Clean supplier data to send:', JSON.stringify(supplierData, null, 2));
+
     if (this.isEditMode && this.currentSupplierId) {
       // Update existing supplier
       console.log('✏️ Updating supplier ID:', this.currentSupplierId);
-      this.supplierService.updateSupplier(this.currentSupplierId, this.currentSupplier).subscribe({
+      this.supplierService.updateSupplier(this.currentSupplierId, supplierData).subscribe({
         next: (response) => {
           console.log('✅ Update response:', response);
           if (response.success) {
@@ -527,7 +574,7 @@ Ghi chú: ${supplier.notes || 'Không có'}
                 route: '/manufacturer'
               }
             );
-            this.loadSuppliers(); // Reload danh sách
+            this.loadSuppliers();
             this.closeDialog();
           } else {
             this.errorMessage = response.message || 'Cập nhật nhà cung cấp thất bại';
@@ -564,8 +611,8 @@ Ghi chú: ${supplier.notes || 'Không có'}
       });
     } else {
       // Create new supplier
-      console.log('➕ Creating new supplier via API');
-      this.supplierService.createSupplier(this.currentSupplier).subscribe({
+      console.log('➕ Creating new supplier');
+      this.supplierService.createSupplier(supplierData).subscribe({
         next: (response) => {
           console.log('✅ Create response:', response);
           if (response.success) {
@@ -598,6 +645,15 @@ Ghi chú: ${supplier.notes || 'Không có'}
         },
         error: (error) => {
           console.error('❌ Create error:', error);
+          console.error('❌ Error status:', error.status);
+          console.error('❌ Error statusText:', error.statusText);
+          console.error('❌ Error error:', error.error);
+          console.error('❌ Error message:', error.message);
+          
+          // Log response body nếu có
+          if (error.error) {
+            console.error('❌ Backend error response:', JSON.stringify(error.error, null, 2));
+          }
           
           if (error.status === 401) {
             this.errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
@@ -605,7 +661,22 @@ Ghi chú: ${supplier.notes || 'Không có'}
           } else if (error.status === 0) {
             this.errorMessage = '❌ Không thể kết nối đến API server.\n\nVui lòng:\n1. Kiểm tra API server có đang chạy không\n2. Kiểm tra URL trong environment.ts\n3. Kiểm tra CORS trong API';
           } else if (error.status === 400) {
-            const errorMsg = error.error?.message || error.error?.errors?.join(', ') || 'Dữ liệu không hợp lệ';
+            // Xử lý chi tiết lỗi 400
+            let errorMsg = 'Dữ liệu không hợp lệ';
+            
+            if (error.error?.message) {
+              errorMsg = error.error.message;
+            } else if (error.error?.errors) {
+              if (Array.isArray(error.error.errors)) {
+                errorMsg = error.error.errors.join(', ');
+              } else if (typeof error.error.errors === 'object') {
+                errorMsg = Object.values(error.error.errors).flat().join(', ');
+              }
+            } else if (typeof error.error === 'string') {
+              errorMsg = error.error;
+            }
+            
+            console.error('❌ 400 Bad Request - Parsed error:', errorMsg);
             
             if (errorMsg.includes('Supplier code already exists') || errorMsg.includes('already exists')) {
               this.errorMessage = '❌ Mã nhà cung cấp đã tồn tại. Đang tự động tạo mã mới...';
@@ -614,11 +685,13 @@ Ghi chú: ${supplier.notes || 'Không có'}
                 this.errorMessage = '';
                 this.saveSupplier();
               }, 1000);
+            } else if (errorMsg.toLowerCase().includes('shop_owner') || errorMsg.toLowerCase().includes('shopowner')) {
+              this.errorMessage = `❌ ${errorMsg}\n\nShop Owner ID hiện tại: ${shopOwnerId}\nVui lòng đăng nhập lại hoặc liên hệ admin.`;
             } else {
-              this.errorMessage = errorMsg;
+              this.errorMessage = `❌ ${errorMsg}`;
             }
           } else {
-            this.errorMessage = error.error?.message || 'Có lỗi xảy ra khi thêm nhà cung cấp';
+            this.errorMessage = error.error?.message || error.message || 'Có lỗi xảy ra khi thêm nhà cung cấp';
           }
           this.isLoading = false;
         }

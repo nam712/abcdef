@@ -32,6 +32,10 @@
           <a href="#" class="nav-link" (click)="navigateToReports(); $event.preventDefault()">Báo cáo</a>
           <a href="#" class="nav-link" (click)="navigateToManufacturers(); $event.preventDefault()">Nhà sản xuất</a>
           <a href="#" class="nav-link" (click)="navigateToInvoices(); $event.preventDefault()">Hóa đơn</a>
+          <a (click)="navigateToPromotions()" class="nav-link">
+            <span class="icon">🎁</span>
+            <span>Khuyến mãi</span>
+          </a>
         </nav>
       </div>
       
@@ -88,8 +92,9 @@
             <input type="text" 
                    class="filter-input" 
                    [(ngModel)]="filters.searchText"
-                   (input)="applyFilter()"
-                   placeholder="Tên, mã, SĐT, email...">
+                   (ngModelChange)="applyFilter()"
+                   placeholder="Tên, mã, SĐT, email..."
+                   name="searchText">
           </div>
 
           <!-- Loại khách hàng -->
@@ -97,7 +102,8 @@
             <label><i class="fas fa-user-tag"></i> Loại khách hàng</label>
             <select class="filter-select" 
                     [(ngModel)]="filters.customerType"
-                    (change)="applyFilter()">
+                    (ngModelChange)="applyFilter()"
+                    name="customerType">
               <option value="">Tất cả</option>
               <option value="retail">Khách lẻ</option>
               <option value="wholesale">Khách sỉ</option>
@@ -109,7 +115,8 @@
             <label><i class="fas fa-toggle-on"></i> Trạng thái</label>
             <select class="filter-select" 
                     [(ngModel)]="filters.status"
-                    (change)="applyFilter()">
+                    (ngModelChange)="applyFilter()"
+                    name="status">
               <option value="">Tất cả</option>
               <option value="active">Hoạt động</option>
               <option value="inactive">Ngừng hoạt động</option>
@@ -121,7 +128,8 @@
             <label><i class="fas fa-sort"></i> Sắp xếp theo</label>
             <select class="filter-select" 
                     [(ngModel)]="filters.sortBy"
-                    (change)="applyFilter()">
+                    (ngModelChange)="applyFilter()"
+                    name="sortBy">
               <option value="name-asc">Tên A-Z</option>
               <option value="name-desc">Tên Z-A</option>
               <option value="points-desc">Điểm cao → thấp</option>
@@ -276,9 +284,6 @@
                    name="customerName" placeholder="VD: Nguyễn Văn A" required>
           </div>
 
-          <!-- Người liên hệ -->
-          
-
           <!-- Điện thoại -->
           <div class="form-group">
             <label for="phone">Số điện thoại <span class="required">*</span></label>
@@ -293,6 +298,31 @@
                    name="email" placeholder="VD: customer@example.com">
           </div>
 
+          <!-- Ngày sinh -->
+          <div class="form-group">
+            <label for="dateOfBirth">Ngày sinh</label>
+            <input type="date" id="dateOfBirth" [(ngModel)]="currentCustomer.dateOfBirth" 
+                   name="dateOfBirth">
+          </div>
+
+          <!-- Giới tính -->
+          <div class="form-group">
+            <label for="gender">Giới tính</label>
+            <select id="gender" [(ngModel)]="currentCustomer.gender" name="gender">
+              <option value="">-- Chọn giới tính --</option>
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+
+          <!-- CMND/CCCD -->
+          <div class="form-group">
+            <label for="idCard">CMND/CCCD</label>
+            <input type="text" id="idCard" [(ngModel)]="currentCustomer.idCard" 
+                   name="idCard" placeholder="VD: 079123456789">
+          </div>
+
           <!-- Mã số thuế -->
           <div class="form-group">
             <label for="taxCode">Mã số thuế</label>
@@ -305,6 +335,43 @@
             <label for="address">Địa chỉ</label>
             <textarea id="address" [(ngModel)]="currentCustomer.address" 
                       name="address" rows="2" placeholder="VD: 123 Đường ABC, Phường XYZ, Quận 1, TP.HCM"></textarea>
+          </div>
+
+          <!-- Số tài khoản ngân hàng -->
+          <div class="form-group">
+            <label for="bankAccount">Số tài khoản</label>
+            <input type="text" id="bankAccount" [(ngModel)]="currentCustomer.bankAccount" 
+                   name="bankAccount" placeholder="VD: 0123456789">
+          </div>
+
+          <!-- Tên ngân hàng -->
+          <div class="form-group">
+            <label for="bankName">Tên ngân hàng</label>
+            <input type="text" id="bankName" [(ngModel)]="currentCustomer.bankName" 
+                   name="bankName" placeholder="VD: Vietcombank">
+          </div>
+
+          <!-- Phân khúc -->
+          <div class="form-group">
+            <label for="segment">Phân khúc</label>
+            <select id="segment" [(ngModel)]="currentCustomer.segment" name="segment">
+              <option value="">-- Chọn phân khúc --</option>
+              <option value="Khách mới">Khách mới</option>
+              <option value="Khách thân thiết">Khách thân thiết</option>
+              <option value="Khách VIP">Khách VIP</option>
+            </select>
+          </div>
+
+          <!-- Nguồn khách hàng -->
+          <div class="form-group">
+            <label for="source">Nguồn khách hàng</label>
+            <select id="source" [(ngModel)]="currentCustomer.source" name="source">
+              <option value="">-- Chọn nguồn --</option>
+              <option value="Website">Website</option>
+              <option value="Facebook">Facebook</option>
+              <option value="Giới thiệu">Giới thiệu</option>
+              <option value="Tự tìm đến">Tự tìm đến</option>
+            </select>
           </div>
 
           <!-- Điểm thưởng -->

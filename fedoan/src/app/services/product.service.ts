@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment'; 
+import { environment } from '../../environments/environment';
+
 export interface Product {
   productId?: number;
-  productCode: string;
+  productCode?: string;
   productName: string;
   description?: string;
   categoryId: number;
@@ -22,12 +23,13 @@ export interface Product {
   weight?: number;
   dimension?: string;
   status?: string;
+  shop_owner_id?: number;
 }
 
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
-  data?: T | any;
+  data?: T;
   errors?: string[];
 }
 
@@ -37,52 +39,57 @@ export interface ApiResponse<T> {
 export class ProductService {
   private apiUrl = `${environment.apiUrl}/api/Product`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    console.log('🔧 Product Service initialized');
+    console.log('📡 API URL:', this.apiUrl);
+  }
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('access_token');
     return new HttpHeaders({
       'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
+      'Accept': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
     });
   }
 
   getAllProducts(): Observable<ApiResponse<Product[]>> {
     console.log('📡 Getting all products from:', `${this.apiUrl}/GetAll`);
-    return this.http.get<ApiResponse<Product[]>>(
-      `${this.apiUrl}/GetAll`,
-      { headers: this.getHeaders() }
-    );
+    return this.http.get<ApiResponse<Product[]>>(`${this.apiUrl}/GetAll`, {
+      headers: this.getHeaders()
+    });
   }
 
   getProductById(id: number): Observable<ApiResponse<Product>> {
-    return this.http.get<ApiResponse<Product>>(
-      `${this.apiUrl}/${id}`,
-      { headers: this.getHeaders() }
-    );
+    return this.http.get<ApiResponse<Product>>(`${this.apiUrl}/${id}`, {
+      headers: this.getHeaders()
+    });
   }
 
-  createProduct(product: Product): Observable<any> {
+  searchProducts(query: string): Observable<ApiResponse<Product[]>> {
+    return this.http.get<ApiResponse<Product[]>>(`${this.apiUrl}/search?q=${query}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  createProduct(product: any): Observable<ApiResponse<any>> {
     console.log('📤 Creating product:', product);
-    return this.http.post<any>(
-      `${this.apiUrl}/Create`,
-      product,
-      { headers: this.getHeaders() }
-    );
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/Create`, product, {
+      headers: this.getHeaders()
+    });
   }
 
-  updateProduct(id: number, product: Product): Observable<any> {
-    return this.http.put<any>(
-      `${this.apiUrl}/Update/${id}`,
-      product,
-      { headers: this.getHeaders() }
-    );
+  updateProduct(id: number, product: any): Observable<ApiResponse<any>> {
+    console.log('📤 PUT request to:', `${this.apiUrl}/Update/${id}`);
+    console.log('📤 Payload:', product);
+    return this.http.put<ApiResponse<any>>(`${this.apiUrl}/Update/${id}`, product, {
+      headers: this.getHeaders()
+    });
   }
 
-  deleteProduct(id: number): Observable<any> {
-    return this.http.delete<any>(
-      `${this.apiUrl}/Delete/${id}`,
-      { headers: this.getHeaders() }
-    );
+  deleteProduct(id: number): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/Delete/${id}`, {
+      headers: this.getHeaders()
+    });
   }
 }

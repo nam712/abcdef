@@ -1,68 +1,27 @@
 import { Routes } from '@angular/router';
+import { AuthGuard } from './auth.guard';
+import { LoginComponent } from './login/login.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { ProductsComponent } from './products/products.component';
+import { PosComponent } from './pos/pos.component';
+import { CustomersComponent } from './customers/customers.component';
+import { EmployeesComponent } from './employees/employees.component';
+import { ReportsComponent } from './reports/reports.component';
+import { ManufacturerComponent } from './manufacturer/manufacturer.component';
+import { InvoiceComponent } from './invoice/invoice.component';
+import { PromotionsComponent } from './promotions/promotions.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/home', pathMatch: 'full' },
-  {
-    path: 'login',
-    loadComponent: () => import('./login/login.component').then(m => m.LoginComponent)
-  },
-  {
-    path: 'home',
-    loadComponent: () => import('./home/home.component').then(m => m.HomeComponent)
-  },
-  {
-    path: 'register',
-    loadComponent: () => import('./register/register.component').then(m => m.RegisterComponent)
-  },
-  {
-    path: 'forgot-password',
-    loadComponent: () => import('./forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
-  },
-  
-  {
-    path: 'dashboard',
-    loadComponent: () => import('./dashboard/dashboard.component').then(m => m.DashboardComponent)
-  },
-  {
-    path: 'products',
-    loadComponent: () => import('./products/products.component').then(m => m.ProductsComponent)
-  },
-  {
-    path: 'customers',
-    loadComponent: () => import('./customers/customers.component').then(m => m.CustomersComponent)
-  },
-  {
-    path: 'pos',
-    loadComponent: () => import('./pos/pos.component').then(m => m.PosComponent)
-  },
-  {
-    path: 'manufacturer',
-    loadComponent: () => import('./manufacturer/manufacturer.component').then(m => m.ManufacturerComponent)
-  },
-  {
-    path: 'stock-in',
-    loadComponent: () => import('./stock-in/stock-in.component').then(m => m.StockInComponent)
-  },
-  {
-    path: 'invoices',
-    loadComponent: () => import('./invoice/invoice.component').then(m => m.InvoiceComponent)
-  },
-  {
-    path: 'employees',
-    loadComponent: () => import('./employees/employees.component').then(m => m.EmployeesComponent)
-  },
-  {
-    path: 'purchase-orders',
-    loadComponent: () => import('./invoice/invoice.component').then(m => m.InvoiceComponent)
-  },
-  // {
-  //   path: 'reports',
-  //   loadComponent: () => import('./reports/reports.component').then(m => m.ReportsComponent)
-  // },
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
+  { path: 'products', component: ProductsComponent, canActivate: [AuthGuard] },
+  { path: 'pos', component: PosComponent, canActivate: [AuthGuard] },
+  { path: 'customers', component: CustomersComponent, canActivate: [AuthGuard] },
+  { path: 'employees', component: EmployeesComponent, canActivate: [AuthGuard] },
+  { path: 'reports', component: ReportsComponent, canActivate: [AuthGuard] },
+  { path: 'manufacturer', component: ManufacturerComponent, canActivate: [AuthGuard] },
+  { path: 'invoices', component: InvoiceComponent, canActivate: [AuthGuard] },
+  { path: 'promotions', component: PromotionsComponent, canActivate: [AuthGuard] },
   { path: '**', redirectTo: '/login' }
 ];
-
-// Nếu bạn gặp lỗi "Could not resolve", hãy kiểm tra:
-// - Đã tạo file employees/employees.component.ts và reports/reports.component.ts chưa?
-// - Đã export EmployeesComponent và ReportsComponent đúng tên chưa?
-// Nếu chưa có file, hãy tạo mới các file component này.

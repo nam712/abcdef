@@ -967,7 +967,7 @@ export class PosComponent implements OnInit {
       return product.imageUrl;
     }
     // Nếu là relative path, thêm base URL
-    return `http://localhost:12606/${product.imageUrl}`;
+    return `${environment.apiUrl}/${product.imageUrl}`;
   }
 
   onImageError(event: Event): void {
@@ -1033,7 +1033,9 @@ export class PosComponent implements OnInit {
       'Đăng xuất',
       'Bạn có chắc muốn đăng xuất?',
       () => {
-        localStorage.removeItem('authToken');
+        // ✅ Xóa đúng key 'auth_token' thay vì 'authToken'
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('access_token'); // Xóa cả access_token nếu có
         this.router.navigate(['/login']);
       }
     );

@@ -98,7 +98,13 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Lỗi khi tạo nhân viên mới", detail = ex.Message });
+                // Log full exception to server console for debugging
+                Console.WriteLine("❌ [EmployeesController.Create] Exception: " + ex.ToString());
+
+                // Return more detailed error (including inner exception) to client for debugging in dev
+                var inner = ex.InnerException?.Message;
+                var detailMsg = ex.Message + (string.IsNullOrEmpty(inner) ? string.Empty : " | Inner: " + inner);
+                return StatusCode(500, new { message = "Lỗi khi tạo nhân viên mới", detail = detailMsg, stackTrace = ex.StackTrace });
             }
         }
 

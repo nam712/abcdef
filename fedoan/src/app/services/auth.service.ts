@@ -27,12 +27,20 @@ export interface AuthResponse {
   errors?: string[];
 }
 
+interface TokenPayload {
+  shop_owner_id: string;
+  user_id: string;
+  email: string;
+  exp: number;
+  [key: string]: any;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  // Hardcode tạm thời để test
-  private apiUrl = `${environment.apiUrl}/api/auth` ;
+  private apiUrl = `${environment.apiUrl}/api/Auth`; // Đổi 'auth' thành 'Auth'
+  private readonly TOKEN_KEY = 'access_token';
 
   constructor(private http: HttpClient) {
     console.log('🔧 Auth Service initialized');
@@ -54,46 +62,95 @@ export class AuthService {
 
   saveToken(token: string): void {
     localStorage.setItem('auth_token', token);
+    localStorage.setItem(this.TOKEN_KEY, token);
     console.log('✅ Token saved to localStorage');
   }
 
   getToken(): string | null {
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem('auth_token') || localStorage.getItem(this.TOKEN_KEY);
+  }
+
+  removeToken(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem('auth_token');
+  }
+
+  decodeToken(): TokenPayload | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+    }
+  }
+
+  getShopOwnerId(): string | null {
+    const decoded = this.decodeToken();
+    console.log('🔍 Getting shop_owner_id from token:', decoded);
+    
+    if (!decoded) return null;
+    
+    const decodedAny = decoded as any;
+    const shopOwnerId = decodedAny.shop_owner_id 
+                     || decodedAny.shopOwnerId 
+                     || decodedAny.ShopOwnerId
+                     || null;
+    
+    console.log('🏪 Resolved shop_owner_id:', shopOwnerId);
+    return shopOwnerId;
   }
 
   getCurrentUserId(): string | null {
-    // Lấy user data từ localStorage
-    const userData = localStorage.getItem('user_data');
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        return user.employeeId || user.shopOwnerId || user.id || null;
-      } catch (e) {
-        console.error('Error parsing user data:', e);
-      }
-    }
+    const decoded = this.decodeToken();
     
-    // Hoặc decode từ JWT token
-    const token = this.getToken();
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.sub || payload.userId || payload.nameid || null;
-      } catch (e) {
-        console.error('Error decoding token:', e);
-      }
-    }
+    if (!decoded) return null;
     
-    return null;
+    const decodedAny = decoded as any;
+    const userId = decodedAny.user_id 
+                || decodedAny.userId 
+                || decodedAny.UserId
+                || null;
+    
+    return userId;
+  }
+
+  /**
+   * Get the user type/role from the decoded token (e.g. 'ShopOwner' or 'Employee')
+   */
+  getUserType(): string | null {
+    const decoded = this.decodeToken();
+    if (!decoded) return null;
+    const d: any = decoded as any;
+    return d.user_type || d.userType || d.role || null;
+  }
+
+  isTokenExpired(): boolean {
+    const decoded = this.decodeToken();
+    if (!decoded) return true;
+
+    const currentTime = Date.now() / 1000;
+    return decoded.exp < currentTime;
   }
 
   isAuthenticated(): boolean {
     const token = this.getToken();
-    return !!token;
+    return token !== null && !this.isTokenExpired();
   }
 
   logout(): void {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem('user_data');
     console.log('🚪 Logged out - Token removed from localStorage');
   }

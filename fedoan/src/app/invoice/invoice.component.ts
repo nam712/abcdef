@@ -8,6 +8,7 @@ import { NotificationBellComponent } from '../shared/notification-bell/notificat
 import { NotificationService } from '../services/notification.service';
 import { CustomerService } from '../services/customer.service';
 import { EmployeeService } from '../services/employee.service';
+import { PromotionService } from '../services/promotion.service';
 
 @Component({
   selector: 'app-invoice',
@@ -38,6 +39,13 @@ export class InvoiceComponent implements OnInit, OnDestroy {
   invoices: Invoice[] = [];
   filteredInvoices: Invoice[] = [];
   
+  // Thêm các property còn thiếu
+  invoiceItems: any[] = [];
+  selectedCustomerId: number | null = null;
+  appliedPromotion: any = null;
+  promotionCode: string = '';
+  isValidatingPromotion = false;
+
   filters = {
     searchText: '',
     paymentStatus: '',
@@ -70,7 +78,8 @@ export class InvoiceComponent implements OnInit, OnDestroy {
     private invoiceService: InvoiceService,
     private notificationService: NotificationService,
     private customerService: CustomerService,
-    private employeeService: EmployeeService
+    private employeeService: EmployeeService,
+    private promotionService: PromotionService
   ) {}
 
   ngOnInit(): void {
@@ -524,6 +533,55 @@ Ghi chú: ${invoice.notes || 'Không có'}
 
   closeDialog(): void {
     this.showDialog = false;
+  }
+
+  get subtotal(): number {
+    return this.invoiceItems.reduce((sum: number, item: any) => sum + (item.quantity * item.unitPrice), 0);
+  }
+
+  get promotionDiscount(): number {
+    return this.appliedPromotion ? this.appliedPromotion.discount : 0;
+  }
+
+  get totalAmount(): number {
+    return this.subtotal - this.promotionDiscount;
+  }
+
+  applyPromotionCode(): void {
+    if (!this.promotionCode.trim()) {
+      this.notificationService.addNotification('Vui lòng nhập mã khuyến mãi', 'error');
+      return;
+    }
+
+    this.isValidatingPromotion = true;
+    this.promotionService.validatePromotion(
+      this.promotionCode,
+      this.subtotal,
+      this.selectedCustomerId || undefined
+    ).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.appliedPromotion = response.data;
+          this.notificationService.addNotification(
+            `Áp dụng mã "${this.promotionCode}" thành công! Giảm ${this.formatCurrency(response.data.discount)}`,
+            'success'
+          );
+        }
+        this.isValidatingPromotion = false;
+      },
+      error: (error) => {
+        console.error('❌ Validation error:', error);
+        const message = error.error?.message || 'Mã khuyến mãi không hợp lệ';
+        this.notificationService.addNotification(message, 'error');
+        this.isValidatingPromotion = false;
+      }
+    });
+  }
+
+  removePromotion(): void {
+    this.appliedPromotion = null;
+    this.promotionCode = '';
+    this.notificationService.addNotification('Đã hủy mã khuyến mãi', 'info');
   }
 
   saveInvoice(): void {

@@ -5,11 +5,13 @@ import { FormsModule } from '@angular/forms';
 import { ProductCategoryService } from '../services/product-category.service';
 import { SupplierService } from '../services/supplier.service';
 import { ProductService } from '../services/product.service';
-import { HttpClient } from '@angular/common/http'; // Thêm dòng này nếu chưa có
+import { HttpClient, HttpHeaders } from '@angular/common/http'; // Thêm dòng này nếu chưa có
 import { environment } from '../../environments/environment';
 import { NotificationBellComponent } from '../shared/notification-bell/notification-bell.component';
 import { NotificationService } from '../services/notification.service';
 import { InventoryAlertService } from '../services/inventory-alert.service'; 
+import { AuthService } from '../services/auth.service';
+
 export interface Product {
   productCode: string;
   productName: string;
@@ -90,9 +92,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
     private categoryService: ProductCategoryService,
     private supplierService: SupplierService,
     private productService: ProductService,
-    private http: HttpClient, // Thêm dòng này nếu chưa có
+    private http: HttpClient,
     private notificationService: NotificationService,
-    private inventoryAlertService: InventoryAlertService
+    private inventoryAlertService: InventoryAlertService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -189,8 +192,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/invoices']);
   }
 
-  logout(): void {
-    this.router.navigate(['/login']);
+  navigateToPromotions(): void {
+    console.log('Click: Khuyến mãi');
+    this.closeMobileMenu();
+    this.router.navigate(['/promotions']);
   }
 
   // Product methods
@@ -264,33 +269,27 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   loadSuppliers(): void {
     console.log('🏢 Loading suppliers from API...');
-    console.log('🌐 API URL:', 'http://localhost:5001/api/Supplier');
     
-    this.supplierService.getAllSuppliers(1, 100).subscribe({
+    this.supplierService.getAllSuppliers().subscribe({
       next: (response) => {
         console.log('✅ Raw Suppliers response:', response);
         
         if (response && response.success && response.data) {
           const data = response.data as any;
-          console.log('📦 Data content:', data);
           
-          // Parse different response formats
           if (Array.isArray(data)) {
-            console.log('✅ Data is direct Array');
             this.suppliers = data.map((sup: any) => ({
               supplierId: sup.supplierId || sup.id || sup.Id,
               supplierName: sup.supplierName || sup.SupplierName,
               supplierCode: sup.supplierCode || sup.SupplierCode
             }));
           } else if (data.suppliers && Array.isArray(data.suppliers)) {
-            console.log('✅ Data.suppliers is Array');
             this.suppliers = data.suppliers.map((sup: any) => ({
               supplierId: sup.supplierId || sup.id || sup.Id,
               supplierName: sup.supplierName || sup.SupplierName,
               supplierCode: sup.supplierCode || sup.SupplierCode
             }));
           } else if (data.items && Array.isArray(data.items)) {
-            console.log('✅ Data.items is Array');
             this.suppliers = data.items.map((sup: any) => ({
               supplierId: sup.supplierId || sup.id || sup.Id,
               supplierName: sup.supplierName || sup.SupplierName,
@@ -298,25 +297,15 @@ export class ProductsComponent implements OnInit, OnDestroy {
             }));
           }
           
-          console.log(`✅ Final suppliers array:`, this.suppliers);
           console.log(`✅ Loaded ${this.suppliers.length} suppliers`);
-        } else {
-          console.error('❌ Invalid response structure');
         }
       },
       error: (error) => {
-        console.error('❌ Full error object:', error);
-        
-        if (error.status === 0) {
-          this.errorMessage = '❌ Không thể kết nối đến API server.';
-        }
-        
-        // Fallback
+        console.error('❌ Error loading suppliers:', error);
         this.suppliers = [
           { supplierId: 1, supplierName: 'Công ty Test 1', supplierCode: 'TEST-001' },
           { supplierId: 2, supplierName: 'Công ty Test 2', supplierCode: 'TEST-002' }
         ];
-        console.log('⚠️ Using fallback supplier data:', this.suppliers);
       }
     });
   }
@@ -631,38 +620,54 @@ export class ProductsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Get shop_owner_id from token
+    const shopOwnerId = this.authService.getShopOwnerId();
+    if (!shopOwnerId) {
+      this.errorMessage = 'Không tìm thấy thông tin shop_owner_id. Vui lòng đăng nhập lại.';
+      this.notificationService.addNotification(
+        'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 
+        'error'
+      );
+      setTimeout(() => this.router.navigate(['/login']), 2000);
+      return;
+    }
+
     this.isLoading = true;
 
-    // Ensure barcode is unique or null
+    // Prepare product data
     const productData = {
       productCode: this.currentProduct.productCode || this.generateProductCode(),
       productName: this.currentProduct.productName?.trim() || '',
-      description: this.currentProduct.description?.trim() || null,
+      description: this.currentProduct.description?.trim() || '',
       categoryId: Number(this.currentProduct.categoryId),
-      brand: this.currentProduct.brand?.trim() || null,
+      brand: this.currentProduct.brand?.trim() || '',
       supplierId: Number(this.currentProduct.supplierId),
       price: Number(this.currentProduct.price) || 0,
       costPrice: Number(this.currentProduct.costPrice) || 0,
       stock: Number(this.currentProduct.stock) || 0,
       minStock: Number(this.currentProduct.minStock) || 0,
       sku: this.currentProduct.sku?.trim() || '',
-      barcode: this.currentProduct.barcode?.trim() || this.generateBarcode(), // Auto-generate if empty
+      barcode: this.currentProduct.barcode?.trim() || this.generateBarcode(),
       unit: this.currentProduct.unit || 'Cái',
-      imageUrl: this.currentProduct.imageUrl?.trim() || null,
-      notes: this.currentProduct.notes?.trim() || null,
-      weight: this.currentProduct.weight ? Number(this.currentProduct.weight) : null,
-      dimension: this.currentProduct.dimension?.trim() || null
+      notes: this.currentProduct.notes?.trim() || '',
+      weight: this.currentProduct.weight ? Number(this.currentProduct.weight) : 0,
+      dimension: this.currentProduct.dimension?.trim() || '',
+      status: this.currentProduct.status || 'active',
+      shop_owner_id: parseInt(shopOwnerId, 10)
     };
 
     console.log('📤 Sending product data:', productData);
 
     if (this.isEditMode && this.currentProductId) {
+      // Update - Backend expects FormData, so always use FormData
       const formData = new FormData();
+      
+      // Append all fields
       formData.append('productCode', productData.productCode);
       formData.append('productName', productData.productName);
-      if (productData.description) formData.append('description', productData.description);
+      formData.append('description', productData.description);
       formData.append('categoryId', productData.categoryId.toString());
-      if (productData.brand) formData.append('brand', productData.brand);
+      formData.append('brand', productData.brand);
       formData.append('supplierId', productData.supplierId.toString());
       formData.append('price', productData.price.toString());
       formData.append('costPrice', productData.costPrice.toString());
@@ -671,115 +676,41 @@ export class ProductsComponent implements OnInit, OnDestroy {
       formData.append('sku', productData.sku);
       formData.append('barcode', productData.barcode);
       formData.append('unit', productData.unit);
-      if (productData.notes) formData.append('notes', productData.notes);
-      if (productData.weight !== null && productData.weight !== undefined) formData.append('weight', productData.weight.toString());
-      if (productData.dimension) formData.append('dimension', productData.dimension);
+      formData.append('notes', productData.notes);
+      formData.append('weight', productData.weight.toString());
+      formData.append('dimension', productData.dimension);
+      formData.append('status', productData.status);
+      formData.append('shop_owner_id', productData.shop_owner_id.toString());
 
-      // Nếu có hình ảnh mới được chọn, thêm vào formData
+      // If there's a new image file, append it
       if (this.selectedFile) {
-        formData.append('image', this.selectedFile);
+        formData.append('image', this.selectedFile, this.selectedFile.name);
       }
 
-      // Không set Content-Type, để HttpClient tự động set multipart/form-data
+      // Get token
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('access_token');
+      const headers = new HttpHeaders({
+        'Authorization': token ? `Bearer ${token}` : ''
+        // DO NOT set Content-Type - let browser set it automatically for multipart/form-data
+      });
+
       this.http.put(
         `${environment.apiUrl}/api/Product/Update/${this.currentProductId}`,
-        formData
+        formData,
+        { headers }
       ).subscribe({
         next: (response: any) => {
-          if (response.success) {
-            console.log('✅ Update response:', response);
-            
-            this.notificationService.addNotification(
-              `Đã cập nhật sản phẩm "${productData.productName}" thành công!`, 
-              'success',
-              {
-                entityType: 'Product',
-                entityId: this.currentProductId!,
-                action: 'Update',
-                route: '/products'
-              }
-            );
-            
-            // Cập nhật trực tiếp vào danh sách products từ response.data
-            console.log('🔍 Checking response.data:', response.data);
-            console.log('🔍 Current product ID:', this.currentProductId);
-            console.log('🔍 Products list length:', this.products.length);
-            
-            if (response.data) {
-              const index = this.products.findIndex(p => (p as any).productId === this.currentProductId);
-              console.log('🔍 Found index:', index);
-              
-              if (index !== -1) {
-                const updatedProduct: Product = {
-                  productCode: response.data.productCode || productData.productCode,
-                  productName: response.data.productName || productData.productName,
-                  description: response.data.description || undefined,
-                  categoryId: response.data.categoryId || productData.categoryId,
-                  brand: response.data.brand || undefined,
-                  supplierId: response.data.supplierId || productData.supplierId,
-                  price: response.data.price || productData.price,
-                  costPrice: response.data.costPrice || productData.costPrice,
-                  stock: response.data.stock || productData.stock,
-                  minStock: response.data.minStock || productData.minStock,
-                  sku: response.data.sku || productData.sku,
-                  barcode: response.data.barcode || undefined,
-                  unit: response.data.unit || productData.unit,
-                  imageUrl: response.data.imageUrl || null,
-                  notes: response.data.notes || undefined,
-                  weight: response.data.weight || undefined,
-                  dimension: response.data.dimension || undefined,
-                  status: response.data.status
-                };
-                
-                // Lưu productId (backend trả về ProductId chữ hoa)
-                (updatedProduct as any).productId = response.data.productId || this.currentProductId;
-                
-                this.products[index] = updatedProduct;
-                console.log('✅ Product updated in list:', updatedProduct);
-                console.log('✅ Updated products array:', this.products);
-              } else {
-                console.warn('⚠️ Product not found in list! ProductId:', this.currentProductId);
-                console.warn('⚠️ Products IDs:', this.products.map(p => (p as any).productId));
-              }
-            } else {
-              console.warn('⚠️ No data in response!');
-            }
-            
-            // Áp dụng filter lại
-            this.applyFilters();
-            
-            // Kiểm tra tồn kho sau khi cập nhật
-            this.inventoryAlertService.checkProduct({
-              productId: this.currentProductId!,
-              productName: productData.productName,
-              stock: productData.stock,
-              minimumStock: productData.minStock,
-              productCode: productData.productCode
-            });
-            
-            this.closeDialog();
-          } else {
-            this.errorMessage = response.message || 'Cập nhật thất bại';
-            this.notificationService.addNotification(
-              response.message || 'Cập nhật sản phẩm thất bại!', 
-              'error'
-            );
-          }
-          this.isLoading = false;
+          this.handleUpdateSuccess(response, productData);
         },
         error: (error) => {
           console.error('❌ Update error:', error);
-          this.errorMessage = error.error?.message || 'Có lỗi xảy ra khi cập nhật';
-          this.notificationService.addNotification(
-            'Có lỗi xảy ra khi cập nhật sản phẩm!', 
-            'error'
-          );
+          this.handleError(error);
           this.isLoading = false;
         }
       });
     } else {
-      // Create
-      this.productService.createProduct(productData as any).subscribe({
+      // Create - use JSON
+      this.productService.createProduct(productData).subscribe({
         next: (response) => {
           if (response.success) {
             console.log('✅ Create response:', response);
@@ -795,40 +726,6 @@ export class ProductsComponent implements OnInit, OnDestroy {
               }
             );
             
-            // Thêm sản phẩm mới vào đầu danh sách từ response.data
-            if (response.data) {
-              const newProduct: Product = {
-                productCode: response.data.productCode,
-                productName: response.data.productName,
-                description: response.data.description || undefined,
-                categoryId: response.data.categoryId,
-                brand: response.data.brand || undefined,
-                supplierId: response.data.supplierId,
-                price: response.data.price,
-                costPrice: response.data.costPrice,
-                stock: response.data.stock,
-                minStock: response.data.minStock,
-                sku: response.data.sku,
-                barcode: response.data.barcode || undefined,
-                unit: response.data.unit,
-                imageUrl: response.data.imageUrl || null,
-                notes: response.data.notes || undefined,
-                weight: response.data.weight || undefined,
-                dimension: response.data.dimension || undefined,
-                status: response.data.status
-              };
-              
-              // Thêm productId (backend trả về ProductId chữ hoa)
-              (newProduct as any).productId = response.data.productId;
-              
-              this.products.unshift(newProduct);
-              console.log('✅ Product added to list:', newProduct);
-            }
-            
-            // Áp dụng filter lại
-            this.applyFilters();
-            
-            // Kiểm tra tồn kho ngay sau khi tạo sản phẩm mới
             if (response.data && response.data.productId) {
               this.inventoryAlertService.checkProduct({
                 productId: response.data.productId,
@@ -839,11 +736,12 @@ export class ProductsComponent implements OnInit, OnDestroy {
               });
             }
             
+            this.loadProducts();
             this.closeDialog();
           } else {
             this.errorMessage = response.message || 'Thêm mới thất bại';
             this.notificationService.addNotification(
-              response.message || 'Thêm sản phẩm mới thất bại!', 
+              response.message || 'Thêm mới thất bại!', 
               'error'
             );
           }
@@ -851,16 +749,107 @@ export class ProductsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('❌ Create error:', error);
-          console.error('❌ Full error:', JSON.stringify(error, null, 2));
-          
-          this.errorMessage = error.error?.message || 'Có lỗi xảy ra. Kiểm tra backend console để xem chi tiết.';
-          this.notificationService.addNotification(
-            'Có lỗi xảy ra khi thêm sản phẩm!', 
-            'error'
-          );
+          this.handleError(error);
           this.isLoading = false;
         }
       });
+    }
+  }
+
+  private handleUpdateSuccess(response: any, productData: any): void {
+    if (response.success) {
+      console.log('✅ Update response:', response);
+      
+      this.notificationService.addNotification(
+        `Đã cập nhật sản phẩm "${productData.productName}" thành công!`, 
+        'success',
+        {
+          entityType: 'Product',
+          entityId: this.currentProductId!,
+          action: 'Update',
+          route: '/products'
+        }
+      );
+      
+      // Optimized: Update in-place without reloading entire list
+      if (response.data) {
+        const index = this.products.findIndex(p => (p as any).productId === this.currentProductId);
+        if (index !== -1) {
+          this.products[index] = {
+            ...this.products[index],
+            productCode: response.data.productCode || productData.productCode,
+            productName: response.data.productName || productData.productName,
+            description: response.data.description || productData.description,
+            categoryId: response.data.categoryId || productData.categoryId,
+            brand: response.data.brand || productData.brand,
+            supplierId: response.data.supplierId || productData.supplierId,
+            price: response.data.price || productData.price,
+            costPrice: response.data.costPrice || productData.costPrice,
+            stock: response.data.stock || productData.stock,
+            minStock: response.data.minStock || productData.minStock,
+            sku: response.data.sku || productData.sku,
+            barcode: response.data.barcode || productData.barcode,
+            unit: response.data.unit || productData.unit,
+            imageUrl: response.data.imageUrl || this.currentProduct.imageUrl,
+            notes: response.data.notes || productData.notes,
+            weight: response.data.weight || productData.weight,
+            dimension: response.data.dimension || productData.dimension,
+            status: response.data.status || productData.status
+          };
+          (this.products[index] as any).productId = this.currentProductId;
+          
+          // Re-apply filters without API call
+          this.applyFilters();
+        }
+      }
+      
+      // Check inventory alert
+      this.inventoryAlertService.checkProduct({
+        productId: this.currentProductId!,
+        productName: productData.productName,
+        stock: productData.stock,
+        minimumStock: productData.minStock,
+        productCode: productData.productCode
+      });
+      
+      this.closeDialog();
+    } else {
+      this.errorMessage = response.message || 'Cập nhật thất bại';
+      this.notificationService.addNotification(
+        response.message || 'Cập nhật sản phẩm thất bại!', 
+        'error'
+      );
+    }
+    this.isLoading = false;
+  }
+
+  private handleError(error: any): void {
+    console.error('❌ Error details:', {
+      status: error.status,
+      message: error.message,
+      error: error.error
+    });
+    
+    if (error.status === 401) {
+      this.errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+      this.notificationService.addNotification(
+        'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 
+        'error'
+      );
+      setTimeout(() => this.router.navigate(['/login']), 2000);
+    } else if (error.status === 0) {
+      this.errorMessage = '❌ Không thể kết nối đến API server.';
+      this.notificationService.addNotification('Không thể kết nối đến server!', 'error');
+    } else if (error.status === 400) {
+      const errorMsg = error.error?.message || error.error?.errors?.join(', ') || 'Dữ liệu không hợp lệ';
+      this.errorMessage = `❌ ${errorMsg}`;
+      this.notificationService.addNotification(errorMsg, 'error');
+    } else if (error.status === 500) {
+      this.errorMessage = '❌ Lỗi server (500). Vui lòng kiểm tra backend logs.';
+      this.notificationService.addNotification('Lỗi server!', 'error');
+    } else {
+      this.errorMessage = error.error?.message || error.message || 'Có lỗi xảy ra';
+      this.notificationService.addNotification(this.errorMessage, 'error');
     }
   }
 
@@ -890,15 +879,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
             }
           );
           
-          // Xóa trực tiếp khỏi danh sách
-          const index = this.products.findIndex(p => (p as any).productId === productId);
-          if (index !== -1) {
-            this.products.splice(index, 1);
-            console.log('✅ Product removed from list');
-          }
-          
-          // Áp dụng filter lại
-          this.applyFilters();
+          this.loadProducts();
         } else {
           this.notificationService.addNotification(
             response.message || 'Xóa sản phẩm thất bại!', 
@@ -909,10 +890,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('❌ Delete error:', error);
-        this.notificationService.addNotification(
-          'Có lỗi xảy ra khi xóa sản phẩm!', 
-          'error'
-        );
+        this.handleError(error);
         this.isLoading = false;
       }
     });
@@ -920,6 +898,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   closeDialog(): void {
     this.showDialog = false;
+    this.selectedFile = null;
     document.body.style.overflow = '';
   }
 
@@ -931,20 +910,41 @@ export class ProductsComponent implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        this.errorMessage = 'Vui lòng chọn file hình ảnh!';
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.errorMessage = 'Kích thước file không được vượt quá 5MB!';
+        return;
+      }
+      
+      // Store the file for later upload
       this.selectedFile = file;
+      
+      // Show preview
       const reader = new FileReader();
       reader.onload = () => {
         this.currentProduct.imageUrl = reader.result as string;
+        console.log('✅ Image preview loaded');
       };
       reader.readAsDataURL(file);
     }
   }
 
   getImageUrl(imageUrl: string): string {
-    // Nếu imageUrl đã là absolute (http/https), trả về luôn
     if (!imageUrl) return '';
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
-    // Nếu là đường dẫn tương đối, thêm domain backend
+    if (imageUrl.startsWith('data:image')) return imageUrl;
     return `${environment.apiUrl}${imageUrl}`;
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }

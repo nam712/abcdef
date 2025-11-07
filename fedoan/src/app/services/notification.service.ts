@@ -37,20 +37,28 @@ export class NotificationService {
   private apiUrl = `${environment.apiUrl}/api/Notification`;
   private notifications$ = new BehaviorSubject<Notification[]>([]);
   private unreadCount$ = new BehaviorSubject<number>(0);
-  private useBackend = true; // Toggle để dùng backend hoặc localStorage
-  private pollingInterval = 30000; // Poll mỗi 30 giây
+  private useBackend = true;
+  private pollingInterval = 30000;
 
   constructor(
     private http: HttpClient,
     private authService: AuthService
   ) {
-    // Load từ backend hoặc localStorage
     this.loadNotifications();
     
-    // Polling để cập nhật thông báo định kỳ
     if (this.useBackend) {
       this.startPolling();
     }
+  }
+
+  // ✅ Thêm method getHeaders để dùng auth_token
+  private getHeaders() {
+    const token = localStorage.getItem('auth_token');
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    };
   }
 
   getNotifications(): Observable<Notification[]> {
@@ -73,10 +81,8 @@ export class NotificationService {
     }
   ): void {
     if (this.useBackend) {
-      // Lấy userId từ AuthService
       const userId = this.authService.getCurrentUserId();
       
-      // Gửi lên backend
       const payload = {
         message,
         type,
@@ -89,22 +95,20 @@ export class NotificationService {
 
       console.log('📤 Sending notification to backend:', payload);
 
-      this.http.post<any>(this.apiUrl, payload).subscribe({
+      // ✅ Dùng getHeaders()
+      this.http.post<any>(this.apiUrl, payload, { headers: this.getHeaders() }).subscribe({
         next: (response) => {
           if (response.success) {
             console.log('✅ Notification created on backend');
-            // Reload từ backend
             this.loadNotificationsFromBackend();
           }
         },
         error: (error) => {
           console.error('❌ Error creating notification on backend:', error);
-          // Fallback to localStorage
           this.addNotificationLocal(message, type);
         }
       });
     } else {
-      // Dùng localStorage
       this.addNotificationLocal(
         message, 
         type, 
@@ -149,15 +153,14 @@ export class NotificationService {
 
   markAsRead(notificationId: number): void {
     if (this.useBackend) {
-      // Gọi API backend
-      this.http.patch(`${this.apiUrl}/${notificationId}/read`, {}).subscribe({
+      // ✅ Dùng getHeaders()
+      this.http.patch(`${this.apiUrl}/${notificationId}/read`, {}, { headers: this.getHeaders() }).subscribe({
         next: () => {
           console.log('✅ Marked as read on backend');
           this.loadNotificationsFromBackend();
         },
         error: (error) => {
           console.error('❌ Error marking as read:', error);
-          // Fallback to local
           this.markAsReadLocal(notificationId);
         }
       });
@@ -180,15 +183,14 @@ export class NotificationService {
 
   markAllAsRead(): void {
     if (this.useBackend) {
-      // Gọi API backend
-      this.http.patch(`${this.apiUrl}/read-all`, {}).subscribe({
+      // ✅ Dùng getHeaders()
+      this.http.patch(`${this.apiUrl}/read-all`, {}, { headers: this.getHeaders() }).subscribe({
         next: () => {
           console.log('✅ Marked all as read on backend');
           this.loadNotificationsFromBackend();
         },
         error: (error) => {
           console.error('❌ Error marking all as read:', error);
-          // Fallback to local
           this.markAllAsReadLocal();
         }
       });
@@ -210,15 +212,14 @@ export class NotificationService {
 
   clearAll(): void {
     if (this.useBackend) {
-      // Gọi API backend
-      this.http.delete(`${this.apiUrl}/all`).subscribe({
+      // ✅ Dùng getHeaders()
+      this.http.delete(`${this.apiUrl}/all`, { headers: this.getHeaders() }).subscribe({
         next: () => {
           console.log('✅ Cleared all on backend');
           this.loadNotificationsFromBackend();
         },
         error: (error) => {
           console.error('❌ Error clearing all:', error);
-          // Fallback to local
           this.clearAllLocal();
         }
       });
@@ -302,7 +303,8 @@ export class NotificationService {
 
   // Load từ backend
   private loadNotificationsFromBackend(): void {
-    this.http.get<any>(`${this.apiUrl}?limit=50`).subscribe({
+    // ✅ Dùng getHeaders()
+    this.http.get<any>(`${this.apiUrl}?limit=50`, { headers: this.getHeaders() }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           console.log('✅ Loaded notifications from backend:', response.data.length);
@@ -313,7 +315,6 @@ export class NotificationService {
       },
       error: (error) => {
         console.error('❌ Error loading from backend:', error);
-        // Fallback to localStorage
         this.useBackend = false;
         this.loadNotificationsFromStorage();
       }
@@ -366,6 +367,7 @@ export class NotificationService {
 
   // Get stats từ backend
   getStats(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/stats`);
+    // ✅ Dùng getHeaders()
+    return this.http.get(`${this.apiUrl}/stats`, { headers: this.getHeaders() });
   }
 }

@@ -88,7 +88,8 @@
             <input type="text" 
                    class="filter-input" 
                    [(ngModel)]="filters.searchText"
-                   (input)="applyFilters()"
+                   (ngModelChange)="applyFilters()"
+                   name="searchText"
                    placeholder="Mã HĐ, khách hàng...">
           </div>
 
@@ -97,7 +98,8 @@
             <label><i class="fas fa-money-bill-wave"></i> Trạng thái TT</label>
             <select class="filter-select" 
                     [(ngModel)]="filters.paymentStatus"
-                    (change)="applyFilters()">
+                    (ngModelChange)="applyFilters()"
+                    name="paymentStatus">
               <option value="">Tất cả</option>
               <option value="paid">Đã thanh toán</option>
               <option value="unpaid">Chưa thanh toán</option>
@@ -112,7 +114,8 @@
             <input type="date" 
                    class="filter-input" 
                    [(ngModel)]="filters.dateFrom"
-                   (change)="applyFilters()">
+                   (ngModelChange)="applyFilters()"
+                   name="dateFrom">
           </div>
 
           <!-- Đến ngày -->
@@ -121,7 +124,8 @@
             <input type="date" 
                    class="filter-input" 
                    [(ngModel)]="filters.dateTo"
-                   (change)="applyFilters()">
+                   (ngModelChange)="applyFilters()"
+                   name="dateTo">
           </div>
 
           <!-- Số tiền tối thiểu -->
@@ -130,7 +134,8 @@
             <input type="number" 
                    class="filter-input" 
                    [(ngModel)]="filters.minAmount"
-                   (input)="applyFilters()"
+                   (ngModelChange)="applyFilters()"
+                   name="minAmount"
                    placeholder="0">
           </div>
 
@@ -140,7 +145,8 @@
             <input type="number" 
                    class="filter-input" 
                    [(ngModel)]="filters.maxAmount"
-                   (input)="applyFilters()"
+                   (ngModelChange)="applyFilters()"
+                   name="maxAmount"
                    placeholder="999,999,999">
           </div>
 
@@ -149,7 +155,8 @@
             <label><i class="fas fa-sort"></i> Sắp xếp theo</label>
             <select class="filter-select" 
                     [(ngModel)]="filters.sortBy"
-                    (change)="applyFilters()">
+                    (ngModelChange)="applyFilters()"
+                    name="sortBy">
               <option value="date-desc">Ngày mới nhất</option>
               <option value="date-asc">Ngày cũ nhất</option>
               <option value="amount-desc">Số tiền cao nhất</option>
@@ -364,6 +371,53 @@
             <label for="notes">Ghi chú</label>
             <textarea id="notes" [(ngModel)]="currentInvoice.notes" 
                       name="notes" rows="3" placeholder="Nhập ghi chú (nếu có)"></textarea>
+          </div>
+        </div>
+
+        <!-- Thêm section khuyến mãi vào form hóa đơn -->
+        <div class="invoice-summary">
+          <div class="summary-row">
+            <span>Tạm tính:</span>
+            <span class="amount">{{ formatCurrency(subtotal) }}</span>
+          </div>
+
+          <!-- Promotion Section -->
+          <div class="promotion-section">
+            <div class="promotion-input-group" *ngIf="!appliedPromotion">
+              <input 
+                type="text" 
+                [(ngModel)]="promotionCode" 
+                placeholder="Nhập mã khuyến mãi"
+                class="promotion-input"
+                [disabled]="isValidatingPromotion">
+              <button 
+                (click)="applyPromotionCode()" 
+                class="btn-apply-promotion"
+                [disabled]="isValidatingPromotion || !promotionCode.trim()">
+                {{ isValidatingPromotion ? '⏳' : '✓' }} Áp dụng
+              </button>
+            </div>
+
+            <div class="applied-promotion" *ngIf="appliedPromotion">
+              <div class="promotion-info">
+                <span class="promotion-icon">🎁</span>
+                <div class="promotion-details">
+                  <strong>{{ appliedPromotion.promotionName }}</strong>
+                  <span class="promotion-code">{{ appliedPromotion.promotionCode }}</span>
+                </div>
+                <button (click)="removePromotion()" class="btn-remove-promotion">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-row discount" *ngIf="promotionDiscount > 0">
+            <span>🎁 Khuyến mãi:</span>
+            <span class="amount discount">-{{ formatCurrency(promotionDiscount) }}</span>
+          </div>
+
+          <div class="summary-row total">
+            <span>Tổng cộng:</span>
+            <span class="amount">{{ formatCurrency(totalAmount) }}</span>
           </div>
         </div>
 

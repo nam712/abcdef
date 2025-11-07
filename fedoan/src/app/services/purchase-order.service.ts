@@ -26,8 +26,18 @@ export class PurchaseOrderService {
   constructor(private http: HttpClient) {}
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({ 'Content-Type': 'application/json', 'Authorization': token ? `Bearer ${token}` : '' });
+    const token = localStorage.getItem('auth_token'); // ✅ Thêm auth_token
+    console.log('🔑 Purchase Order Token:', token ? 'Available' : 'Not found');
+    
+    if (!token) {
+      console.warn('⚠️ No authentication token found');
+    }
+    
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    });
   }
 
   getAll(): Observable<ApiResponse<any>> {

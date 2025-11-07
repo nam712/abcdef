@@ -1,0 +1,172 @@
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.mobile-open]="isMobileMenuOpen">
+    <div class="sidebar-header">
+      <h2>🎁 Shop Manager</h2>
+      <button class="close-mobile-menu" (click)="closeMobileMenu()">✕</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a (click)="navigateToDashboard()" class="nav-link"><span class="icon">🏠</span><span>Trang chủ</span></a></li>
+        <li><a (click)="navigateToProducts()" class="nav-link"><span class="icon">📦</span><span>Hàng hóa</span></a></li>
+        <li><a (click)="navigateToCustomers()" class="nav-link"><span class="icon">👥</span><span>Khách hàng</span></a></li>
+        <li><a (click)="navigateToPromotions()" class="nav-link active"><span class="icon">🎁</span><span>Khuyến mãi</span></a></li>
+        <li><a (click)="navigateToEmployees()" class="nav-link"><span class="icon">👤</span><span>Nhân viên</span></a></li>
+        <li><a (click)="navigateToInvoices()" class="nav-link"><span class="icon">🧾</span><span>Hóa đơn</span></a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <button class="mobile-menu-btn" (click)="toggleMobileMenu()">☰</button>
+        <h1>Quản lý Khuyến mãi</h1>
+      </div>
+      <div class="header-right">
+        <button class="theme-toggle" (click)="changeTheme()">🎨 {{ getCurrentThemeLabel() }}</button>
+        <app-notification-bell></app-notification-bell>
+        <div class="user-menu">
+          <img [src]="currentUser.avatar" alt="Avatar">
+          <span>{{ currentUser.name }}</span>
+          <button (click)="logout()" class="logout-btn">Đăng xuất</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Promotions Content -->
+    <div class="promotions-container">
+      <div class="header">
+        <h1>🎁 Quản lý Khuyến mãi</h1>
+        <button class="btn-add" (click)="openAddDialog()">
+          <span>➕</span> Thêm khuyến mãi
+        </button>
+      </div>
+
+      <div class="filters-section">
+        <input 
+          type="text" 
+          placeholder="🔍 Tìm kiếm khuyến mãi..." 
+          [(ngModel)]="filters.searchText"
+          (ngModelChange)="applyFilter()"
+          class="search-input">
+        
+        <select [(ngModel)]="filters.promotionType" (ngModelChange)="applyFilter()" class="filter-select">
+          <option value="">Tất cả loại</option>
+          <option value="percentage">Giảm %</option>
+          <option value="fixed">Giảm cố định</option>
+          <option value="buy_x_get_y">Mua X tặng Y</option>
+          <option value="free_shipping">Miễn phí ship</option>
+        </select>
+
+        <select [(ngModel)]="filters.status" (ngModelChange)="applyFilter()" class="filter-select">
+          <option value="">Tất cả trạng thái</option>
+          <option value="active">Hoạt động</option>
+          <option value="inactive">Tạm ngưng</option>
+          <option value="expired">Hết hạn</option>
+        </select>
+
+        <button class="btn-reset" (click)="resetFilters()">🔄 Reset</button>
+      </div>
+
+      <div class="promotions-grid" *ngIf="!isLoading">
+        <div class="promotion-card" *ngFor="let promo of filteredPromotions">
+          <div class="promotion-header">
+            <h3>{{ promo.promotionName }}</h3>
+            <span [class]="'status-badge status-' + promo.status">
+              {{ getStatusLabel(promo.status) }}
+            </span>
+          </div>
+          
+          <div class="promotion-body">
+            <p class="promotion-code">Mã: <strong>{{ promo.promotionCode }}</strong></p>
+            <p class="promotion-type">{{ getPromotionTypeLabel(promo.promotionType) }}</p>
+            <p class="promotion-value">Giảm: <strong>{{ promo.discountValue }}{{ promo.promotionType === 'percentage' ? '%' : 'đ' }}</strong></p>
+            <p class="promotion-dates">{{ promo.startDate | date:'dd/MM/yyyy' }} - {{ promo.endDate | date:'dd/MM/yyyy' }}</p>
+            <p class="promotion-usage" *ngIf="promo.usageLimit">Đã dùng: {{ promo.usageCount }}/{{ promo.usageLimit }}</p>
+          </div>
+
+          <div class="promotion-actions">
+            <button class="btn-edit" (click)="editPromotion(promo)">✏️ Sửa</button>
+            <button class="btn-delete" (click)="deletePromotion(promo)">🗑️ Xóa</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="loading" *ngIf="isLoading">⏳ Đang tải...</div>
+      <div class="no-data" *ngIf="!isLoading && filteredPromotions.length === 0">
+        Không có khuyến mãi nào.
+      </div>
+
+      <!-- Dialog thêm/sửa -->
+      <div class="dialog-overlay" *ngIf="showDialog" (click)="closeDialog()">
+        <div class="dialog" (click)="$event.stopPropagation()">
+          <h2>{{ isEditMode ? '✏️ Sửa khuyến mãi' : '➕ Thêm khuyến mãi' }}</h2>
+          
+          <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+          <div class="form-group">
+            <label>Mã khuyến mãi *</label>
+            <input type="text" [(ngModel)]="currentPromotion.promotionCode" [disabled]="isEditMode">
+          </div>
+
+          <div class="form-group">
+            <label>Tên khuyến mãi *</label>
+            <input type="text" [(ngModel)]="currentPromotion.promotionName">
+          </div>
+
+          <div class="form-group">
+            <label>Mô tả</label>
+            <textarea [(ngModel)]="currentPromotion.description" rows="3"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Loại khuyến mãi *</label>
+              <select [(ngModel)]="currentPromotion.promotionType">
+                <option value="percentage">Giảm %</option>
+                <option value="fixed">Giảm cố định</option>
+                <option value="buy_x_get_y">Mua X tặng Y</option>
+                <option value="free_shipping">Miễn phí ship</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Giá trị giảm *</label>
+              <input type="number" [(ngModel)]="currentPromotion.discountValue">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Ngày bắt đầu *</label>
+              <input type="date" [(ngModel)]="currentPromotion.startDate">
+            </div>
+
+            <div class="form-group">
+              <label>Ngày kết thúc *</label>
+              <input type="date" [(ngModel)]="currentPromotion.endDate">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Trạng thái</label>
+            <select [(ngModel)]="currentPromotion.status">
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Tạm ngưng</option>
+              <option value="expired">Hết hạn</option>
+            </select>
+          </div>
+
+          <div class="dialog-actions">
+            <button class="btn-cancel" (click)="closeDialog()">Hủy</button>
+            <button class="btn-save" (click)="savePromotion()">{{ isEditMode ? 'Cập nhật' : 'Thêm' }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { CustomerService, Customer } from '../services/customer.service';
 import { NotificationBellComponent } from '../shared/notification-bell/notification-bell.component';
 import { NotificationService } from '../services/notification.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-customers',
@@ -55,7 +56,8 @@ export class CustomersComponent implements OnInit {
   constructor(
     private router: Router,
     private customerService: CustomerService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -91,8 +93,7 @@ export class CustomersComponent implements OnInit {
       avatarUrl: '',
       status: 'active',
       notes: '',
-      createdAt: '',
-      updatedAt: ''
+      contactPerson: ''
     };
   }
 
@@ -107,8 +108,17 @@ export class CustomersComponent implements OnInit {
   loadCustomers(): void {
     this.isLoading = true;
     this.customerService.getAllCustomers().subscribe({
-      next: (data) => {
-        this.customers = Array.isArray(data) ? data : [];
+      next: (response) => {
+        console.log('✅ Raw API Response:', response);
+        
+        if (response && response.success && response.data) {
+          this.customers = Array.isArray(response.data) ? response.data : [];
+        } else if (Array.isArray(response)) {
+          this.customers = response;
+        } else {
+          this.customers = [];
+        }
+        
         this.applyFilter();
         this.isLoading = false;
       },
@@ -248,6 +258,8 @@ export class CustomersComponent implements OnInit {
 
   saveCustomer(): void {
     this.errorMessage = '';
+    
+    // Validation
     if (!this.currentCustomer.customerName?.trim()) {
       this.errorMessage = 'Vui lòng nhập tên khách hàng!';
       return;
@@ -260,7 +272,8 @@ export class CustomersComponent implements OnInit {
       this.errorMessage = 'Vui lòng nhập số điện thoại!';
       return;
     }
-    // Kiểm tra số điện thoại đã tồn tại
+
+    // Check duplicate phone
     const phoneExists = this.customers.some(c => 
       c.phone === this.currentCustomer.phone && 
       c.customerId !== this.currentCustomerId
@@ -269,20 +282,33 @@ export class CustomersComponent implements OnInit {
       this.errorMessage = 'Số điện thoại này đã được sử dụng bởi khách hàng khác!';
       return;
     }
-    // Chuyển đổi đúng kiểu dữ liệu cho các trường số và ngày
+
+    // Get shop_owner_id from token
+    const shopOwnerId = this.authService.getShopOwnerId();
+    if (!shopOwnerId) {
+      this.errorMessage = 'Không tìm thấy thông tin shop_owner_id. Vui lòng đăng nhập lại.';
+      this.notificationService.addNotification(
+        'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 
+        'error'
+      );
+      setTimeout(() => this.router.navigate(['/login']), 2000);
+      return;
+    }
+
+    // Prepare payload
     const payload: any = {
-      customerCode: this.currentCustomer.customerCode || '',
-      customerName: this.currentCustomer.customerName || '',
-      phone: this.currentCustomer.phone || '',
-      email: this.currentCustomer.email?.trim() || null, // null nếu rỗng, không gửi chuỗi rỗng
-      address: this.currentCustomer.address || '',
-      taxCode: this.currentCustomer.taxCode || '',
+      customerCode: this.currentCustomer.customerCode?.trim(),
+      customerName: this.currentCustomer.customerName?.trim(),
+      phone: this.currentCustomer.phone?.trim(),
+      email: this.currentCustomer.email?.trim() || '',
+      address: this.currentCustomer.address?.trim() || '',
+      taxCode: this.currentCustomer.taxCode?.trim() || '',
       customerType: this.currentCustomer.customerType || 'retail',
       dateOfBirth: this.currentCustomer.dateOfBirth ? new Date(this.currentCustomer.dateOfBirth).toISOString() : null,
       gender: this.currentCustomer.gender || '',
-      idCard: this.currentCustomer.idCard || '',
-      bankAccount: this.currentCustomer.bankAccount || '',
-      bankName: this.currentCustomer.bankName || '',
+      idCard: this.currentCustomer.idCard?.trim() || '',
+      bankAccount: this.currentCustomer.bankAccount?.trim() || '',
+      bankName: this.currentCustomer.bankName?.trim() || '',
       totalDebt: Number(this.currentCustomer.totalDebt) || 0,
       totalPurchaseAmount: Number(this.currentCustomer.totalPurchaseAmount) || 0,
       totalPurchaseCount: Number(this.currentCustomer.totalPurchaseCount) || 0,
@@ -291,41 +317,58 @@ export class CustomersComponent implements OnInit {
       source: this.currentCustomer.source || '',
       avatarUrl: this.currentCustomer.avatarUrl || '',
       status: this.currentCustomer.status || 'active',
-      notes: this.currentCustomer.notes || ''
-      // Không gửi customerId, createdAt, updatedAt khi thêm mới
+      notes: this.currentCustomer.notes?.trim() || '',
+      shop_owner_id: parseInt(shopOwnerId, 10)
     };
 
+    console.log('📤 Payload gửi đi:', payload);
+
     this.isLoading = true;
+
     if (this.isEditMode && this.currentCustomerId) {
-  payload.customerId = this.currentCustomerId; // ✅ thêm ID vào payload
-  this.customerService.updateCustomer(this.currentCustomerId, payload).subscribe({
-    next: () => {
-      this.notificationService.addNotification(
-        `Đã cập nhật khách hàng "${payload.customerName}" thành công!`, 
-        'success'
-      );
-      this.loadCustomers();
-      this.closeDialog();
-      this.isLoading = false;
-    },
-    error: (error) => {
-      console.error('❌ Update error:', error);
-      this.errorMessage = 'Có lỗi xảy ra khi cập nhật';
-      this.notificationService.addNotification(
-        'Có lỗi xảy ra khi cập nhật khách hàng!', 
-        'error'
-      );
-      this.isLoading = false;
-    }
-  });
-} else {
-      // Gửi đúng payload cho backend
-      console.log('📤 Payload gửi đi:', payload); // Log payload
+      // Update
+      payload.customerId = this.currentCustomerId;
+      
+      this.customerService.updateCustomer(this.currentCustomerId, payload).subscribe({
+        next: (response) => {
+          console.log('✅ Update response:', response);
+          this.notificationService.addNotification(
+            `Đã cập nhật khách hàng "${payload.customerName}" thành công!`, 
+            'success',
+            {
+              entityType: 'Customer',
+              entityId: this.currentCustomerId!,
+              action: 'Update',
+              route: '/customers'
+            }
+          );
+          this.loadCustomers();
+          this.closeDialog();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('❌ Update error:', error);
+          this.handleError(error);
+          this.isLoading = false;
+        }
+      });
+    } else {
+      // Create
       this.customerService.createCustomer(payload).subscribe({
-        next: () => {
+        next: (response: any) => {
+          console.log('✅ Create response:', response);
+          
+          const customerId = response?.data?.customerId || response?.customerId || null;
+          
           this.notificationService.addNotification(
             `Đã thêm khách hàng "${payload.customerName}" thành công!`, 
-            'success'
+            'success',
+            {
+              entityType: 'Customer',
+              entityId: customerId,
+              action: 'Create',
+              route: '/customers'
+            }
           );
           this.loadCustomers();
           this.closeDialog();
@@ -333,18 +376,61 @@ export class CustomersComponent implements OnInit {
         },
         error: (error) => {
           console.error('❌ Create error:', error);
-          console.error('❌ Error details:', error.error); // Log chi tiết lỗi
-          if (error.error && error.error.errors) {
-            console.error('❌ Validation errors:', error.error.errors);
-          }
-          this.errorMessage = error.error?.title || 'Có lỗi xảy ra khi thêm khách hàng';
-          this.notificationService.addNotification(
-            'Có lỗi xảy ra khi thêm khách hàng!', 
-            'error'
-          );
+          this.handleError(error);
           this.isLoading = false;
         }
       });
+    }
+  }
+
+  private handleError(error: any): void {
+    console.error('❌ Error details:', {
+      status: error.status,
+      message: error.message,
+      error: error.error
+    });
+    
+    if (error.status === 401) {
+      this.errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+      this.notificationService.addNotification(
+        'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 
+        'error'
+      );
+      setTimeout(() => this.router.navigate(['/login']), 2000);
+    } else if (error.status === 0) {
+      this.errorMessage = '❌ Không thể kết nối đến API server.';
+      this.notificationService.addNotification('Không thể kết nối đến server!', 'error');
+    } else if (error.status === 400) {
+      const errorMsg = error.error?.message || error.error?.errors?.join(', ') || 'Dữ liệu không hợp lệ';
+      this.errorMessage = `❌ ${errorMsg}`;
+      this.notificationService.addNotification(errorMsg, 'error');
+    } else if (error.status === 500) {
+      // Backend error - log chi tiết để debug
+      console.error('❌ 500 Internal Server Error');
+      console.error('❌ Error response:', error.error);
+      
+      let errorDetail = '';
+      if (error.error) {
+        if (typeof error.error === 'string') {
+          errorDetail = error.error;
+        } else if (error.error.message) {
+          errorDetail = error.error.message;
+        } else if (error.error.title) {
+          errorDetail = error.error.title;
+        }
+      }
+      
+      this.errorMessage = `❌ Lỗi server (500): ${errorDetail || 'Vui lòng kiểm tra backend logs'}`;
+      this.notificationService.addNotification(
+        'Lỗi server! Vui lòng kiểm tra backend console.', 
+        'error'
+      );
+      
+      // Log thêm payload đã gửi để debug
+      console.error('❌ Payload đã gửi:', this.currentCustomer);
+    } else {
+      this.errorMessage = error.error?.message || error.message || 'Có lỗi xảy ra';
+      this.notificationService.addNotification(this.errorMessage, 'error');
     }
   }
 
@@ -378,11 +464,25 @@ export class CustomersComponent implements OnInit {
   }
 
   // Navigation methods
-  toggleMobileMenu(): void { this.isMobileMenuOpen = !this.isMobileMenuOpen; }
-  closeMobileMenu(): void { this.isMobileMenuOpen = false; }
-  openProductsSubmenu(): void { this.productsSubmenuOpen = true; }
-  closeProductsSubmenu(): void { this.productsSubmenuOpen = false; }
-  toggleProductsSubmenu(): void { this.productsSubmenuOpen = !this.productsSubmenuOpen; }
+  toggleMobileMenu(): void { 
+    this.isMobileMenuOpen = !this.isMobileMenuOpen; 
+  }
+  
+  closeMobileMenu(): void { 
+    this.isMobileMenuOpen = false; 
+  }
+  
+  openProductsSubmenu(): void { 
+    this.productsSubmenuOpen = true; 
+  }
+  
+  closeProductsSubmenu(): void { 
+    this.productsSubmenuOpen = false; 
+  }
+  
+  toggleProductsSubmenu(): void { 
+    this.productsSubmenuOpen = !this.productsSubmenuOpen; 
+  }
 
   navigateToDashboard(): void {
     console.log('Click: Trang chủ');
@@ -414,6 +514,7 @@ export class CustomersComponent implements OnInit {
   navigateToCustomers(): void {
     console.log('Click: Khách hàng');
     this.closeMobileMenu();
+    // Already on customers page
   }
 
   navigateToEmployees(): void {
@@ -437,12 +538,23 @@ export class CustomersComponent implements OnInit {
   navigateToInvoices(): void {
     console.log('Click: Hóa đơn');
     this.closeMobileMenu();
-      this.router.navigate(['/invoices']);
+    this.router.navigate(['/invoices']);
+  }
+
+  navigateToPromotions(): void {
+    console.log('Click: Khuyến mãi');
+    this.closeMobileMenu();
+    this.router.navigate(['/promotions']);
   }
 
   logout(): void {
     console.log('Click: Đăng xuất');
+    this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  ngOnDestroy(): void {
+    document.body.style.overflow = '';
   }
 
   trackByCustomerId(index: number, customer: Customer): number {

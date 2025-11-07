@@ -15,8 +15,13 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(private inventoryAlertService: InventoryAlertService) {}
 
   ngOnInit(): void {
-    // Bắt đầu theo dõi tồn kho khi app khởi động
-    this.inventoryAlertService.startMonitoring();
+    // Tắt tạm thời notification service vì bảng chưa tồn tại
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Tạm thời comment để tránh lỗi
+      // this.inventoryAlertService.startMonitoring();
+      console.log('⚠️ Inventory monitoring disabled - notifications table not exist');
+    }
   }
 
   ngOnDestroy(): void {

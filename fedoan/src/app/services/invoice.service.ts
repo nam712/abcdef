@@ -14,8 +14,8 @@ export class InvoiceService {
   constructor(private http: HttpClient) {}
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
-    console.log('🔑 Token:', token ? 'Available' : 'Not found');
+    const token = localStorage.getItem('auth_token'); // ✅ Đổi từ 'token' sang 'auth_token'
+    console.log('🔑 Invoice Token:', token ? 'Available' : 'Not found');
     
     if (!token) {
       console.warn('⚠️ No authentication token found');
@@ -23,6 +23,7 @@ export class InvoiceService {
     
     return new HttpHeaders({
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       'Authorization': token ? `Bearer ${token}` : ''
     });
   }

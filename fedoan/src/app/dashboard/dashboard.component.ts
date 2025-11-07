@@ -211,4 +211,10 @@ export class DashboardComponent implements OnInit {
     this.closeProductsSubmenu();
     this.router.navigate(['/invoices']);
   }
+
+  navigateToPromotions(): void {
+    console.log('Click: Khuyến mãi');
+    this.closeMobileMenu();
+    this.router.navigate(['/promotions']);
+  }
 }

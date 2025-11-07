@@ -44,7 +44,23 @@ namespace Backend.Services
                 employee.Password = YourShopManagement.API.Helpers.PasswordHelper.HashPassword(employee.Password);
                 Console.WriteLine("🔒 [DEBUG] Employee password hashed when creating new employee");
             }
-            
+            // Ensure DateTime properties have UTC kind before saving to PostgreSQL
+            try
+            {
+                // If CreatedAt/UpdatedAt not set, initialize them
+                if (employee.CreatedAt == default)
+                    employee.CreatedAt = DateTime.UtcNow;
+                if (employee.UpdatedAt == default)
+                    employee.UpdatedAt = DateTime.UtcNow;
+
+                // Convert other DateTime fields to UTC (hire date, date of birth)
+                ConvertEmployeeDateTimesToUtc(employee);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ [DEBUG] Error converting DateTimes to UTC: {ex.Message}");
+            }
+
             var added = await _repository.AddAsync(employee);
             return _mapper.Map<EmployeeDto>(added);
         }

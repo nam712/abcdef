@@ -1,0 +1,271 @@
+<div class="reports-container">
+  <!-- Header -->
+  <header class="reports-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button class="back-btn" (click)="navigateToDashboard()">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1>📊 Báo cáo bán hàng</h1>
+      </div>
+      <div class="header-right">
+        <div class="export-dropdown">
+          <button class="export-btn" (click)="toggleExportMenu()">
+            <i class="fas fa-download"></i>
+            Xuất báo cáo
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" *ngIf="showExportMenu" (click)="$event.stopPropagation()">
+            <button (click)="exportToCSV(salesData)">
+              <i class="fas fa-file-csv"></i>
+              Xuất CSV
+            </button>
+            <button (click)="exportToExcel()">
+              <i class="fas fa-file-excel"></i>
+              Xuất Excel
+            </button>
+            <button (click)="exportToPDF()">
+              <i class="fas fa-file-pdf"></i>
+              Xuất PDF (In)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filter Section -->
+  <section class="filter-section">
+    <div class="period-tabs">
+      <button class="period-tab" 
+              [class.active]="selectedPeriod === 'today'"
+              (click)="onPeriodChange('today')">
+        Hôm nay
+      </button>
+      <button class="period-tab" 
+              [class.active]="selectedPeriod === 'week'"
+              (click)="onPeriodChange('week')">
+        7 ngày qua
+      </button>
+      <button class="period-tab" 
+              [class.active]="selectedPeriod === 'month'"
+              (click)="onPeriodChange('month')">
+        30 ngày qua
+      </button>
+      <button class="period-tab" 
+              [class.active]="selectedPeriod === 'custom'"
+              (click)="onPeriodChange('custom')">
+        Tùy chỉnh
+      </button>
+    </div>
+
+    <div class="date-range" *ngIf="selectedPeriod === 'custom'">
+      <div class="date-input-group">
+        <label>Từ ngày:</label>
+        <input type="date" [(ngModel)]="startDate" (change)="loadReports()">
+      </div>
+      <div class="date-input-group">
+        <label>Đến ngày:</label>
+        <input type="date" [(ngModel)]="endDate" (change)="loadReports()">
+      </div>
+    </div>
+  </section>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="isLoading">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Đang tải báo cáo...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="reports-content" *ngIf="!isLoading">
+    <!-- Summary Cards -->
+    <section class="summary-section">
+      <div class="summary-card">
+        <div class="card-icon revenue">
+          <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="card-content">
+          <p class="card-label">Tổng doanh thu</p>
+          <h3 class="card-value">{{ totalRevenue | number:'1.0-0' }} đ</h3>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="card-icon orders">
+          <i class="fas fa-shopping-cart"></i>
+        </div>
+        <div class="card-content">
+          <p class="card-label">Tổng đơn hàng</p>
+          <h3 class="card-value">{{ totalOrders }}</h3>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="card-icon average">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="card-content">
+          <p class="card-label">Giá trị TB/đơn</p>
+          <h3 class="card-value">{{ averageOrderValue | number:'1.0-0' }} đ</h3>
+        </div>
+      </div>
+    </section>
+
+    <!-- New: Inventory & Customer Summary -->
+    <section class="info-section">
+      <!-- Inventory Summary -->
+      <div class="info-card">
+        <div class="info-header">
+          <h3>📦 Tổng quan Hàng hóa</h3>
+        </div>
+        <div class="info-body">
+          <div class="info-row">
+            <span class="info-label">Tổng sản phẩm:</span>
+            <span class="info-value">{{ inventorySummary.totalProducts }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Tổng tồn kho:</span>
+            <span class="info-value">{{ inventorySummary.totalStock }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Sản phẩm sắp hết:</span>
+            <span class="info-value warning">{{ inventorySummary.lowStockProducts }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Sản phẩm hết hàng:</span>
+            <span class="info-value danger">{{ inventorySummary.outOfStockProducts }}</span>
+          </div>
+          <div class="info-row total">
+            <span class="info-label">Giá trị tồn kho:</span>
+            <span class="info-value">{{ inventorySummary.totalInventoryValue | number:'1.0-0' }} đ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Summary -->
+      <div class="info-card">
+        <div class="info-header">
+          <h3>👥 Tổng quan Khách hàng</h3>
+        </div>
+        <div class="info-body">
+          <div class="info-row">
+            <span class="info-label">Tổng khách hàng:</span>
+            <span class="info-value">{{ customerSummary.totalCustomers }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Khách hàng mới (tháng này):</span>
+            <span class="info-value success">{{ customerSummary.newCustomersThisMonth }}</span>
+          </div>
+          <div class="top-customers" *ngIf="customerSummary.topCustomers && customerSummary.topCustomers.length > 0">
+            <h4>Top khách hàng thân thiết:</h4>
+            <div class="customer-item" *ngFor="let customer of customerSummary.topCustomers; let i = index">
+              <span class="rank">{{ i + 1 }}.</span>
+              <span class="name">{{ customer.customerName }}</span>
+              <span class="value">{{ customer.totalSpent | number:'1.0-0' }} đ</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+      <!-- Revenue Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>📈 Doanh thu theo ngày</h3>
+        </div>
+        <div class="chart-body">
+          <div class="simple-chart" *ngIf="salesData.length > 0">
+            <div class="chart-bar" *ngFor="let data of salesData">
+              <div class="bar-wrapper">
+                <div class="bar" 
+                     [style.height.%]="(data.revenue / totalRevenue) * 100"
+                     [title]="data.revenue | number:'1.0-0'">
+                </div>
+              </div>
+              <div class="bar-label">{{ data.date.substring(5) }}</div>
+              <div class="bar-value">{{ data.revenue | number:'1.0-0' }}</div>
+            </div>
+          </div>
+          <div class="no-data" *ngIf="salesData.length === 0">
+            <i class="fas fa-chart-bar"></i>
+            <p>Chưa có dữ liệu</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Products -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>🏆 Top sản phẩm bán chạy</h3>
+        </div>
+        <div class="chart-body">
+          <div class="top-products-list" *ngIf="topProducts && topProducts.length > 0">
+            <div class="product-item" *ngFor="let product of topProducts; let i = index">
+              <div class="product-rank">{{ i + 1 }}</div>
+              <div class="product-info">
+                <p class="product-name">{{ product.productName }}</p>
+                <p class="product-stats">
+                  Số lượng: {{ product.quantity }} | 
+                  Doanh thu: {{ product.revenue | number:'1.0-0' }} đ
+                </p>
+              </div>
+              <div class="product-bar">
+                <div class="bar-fill" 
+                     [style.width.%]="topProducts[0] ? (product.revenue / topProducts[0].revenue) * 100 : 0">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="no-data" *ngIf="!topProducts || topProducts.length === 0">
+            <i class="fas fa-box-open"></i>
+            <p>Chưa có dữ liệu</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Detailed Table -->
+    <section class="table-section">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>📋 Chi tiết theo ngày</h3>
+        </div>
+        <div class="table-body">
+          <table class="data-table" *ngIf="salesData.length > 0">
+            <thead>
+              <tr>
+                <th>Ngày</th>
+                <th>Số đơn</th>
+                <th>Doanh thu</th>
+                <th>TB/đơn</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let data of salesData">
+                <td>{{ data.date }}</td>
+                <td>{{ data.orders }}</td>
+                <td>{{ data.revenue | number:'1.0-0' }} đ</td>
+                <td>{{ (data.revenue / data.orders) | number:'1.0-0' }} đ</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td><strong>Tổng</strong></td>
+                <td><strong>{{ totalOrders }}</strong></td>
+                <td><strong>{{ totalRevenue | number:'1.0-0' }} đ</strong></td>
+                <td><strong>{{ averageOrderValue | number:'1.0-0' }} đ</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+          <div class="no-data" *ngIf="salesData.length === 0">
+            <i class="fas fa-table"></i>
+            <p>Chưa có dữ liệu</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
