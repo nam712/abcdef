@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Backend.DTOs;
+using YourShopManagement.API.DTOs.Common;
+
 
 namespace Backend.Services
 {
@@ -18,6 +20,16 @@ namespace Backend.Services
         Task<IEnumerable<EmployeeDto>> GetByWorkStatusAsync(string workStatus);
         Task<EmployeeDto> AddOrUpdateWithAvatarAsync(EmployeeDto dto);
         Task DeleteAvatarAsync(int employeeId);
+        
+        // ✅ THÊM METHOD DEBUG
+        Task<object> DebugDatabaseAsync();
+        Task<EmployeeDto> GetByUsernameAsync(string username);
+        Task<IEnumerable<EmployeeDto>> GetAllWithoutFilterAsync(); // ✅ THÊM
+
+        // ✅ THÊM METHOD CHO EMPLOYEE TỰ CẬP NHẬT
+        Task<EmployeeDto> UpdateByEmployeeAsync(int employeeId, EmployeeUpdateByEmployeeDto dto);
+
+        Task<PaginatedResponse<EmployeeDto>> GetPaginatedAsync(PaginationRequest request);
     }
 
 

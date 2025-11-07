@@ -1,11 +1,11 @@
-﻿
+﻿using Backend.Models;
+// Interface for Employee repository with async CRUD and search methods
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using YourShopManagement.API.DTOs.Common;
+
 namespace Backend.Repositories
 {
-    using Backend.Models;
-    // Interface for Employee repository with async CRUD and search methods
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
-
     public interface IEmployeeRepository
     {
         Task<Employee> GetByIdAsync(int employeeId);
@@ -17,6 +17,13 @@ namespace Backend.Repositories
         Task<IEnumerable<Employee>> SearchAsync(string keyword);
         Task<IEnumerable<Employee>> GetByDepartmentAsync(string department);
         Task<IEnumerable<Employee>> GetByWorkStatusAsync(string workStatus);
+        Task<Employee> GetByUsernameAsync(string username);
+        
+        // ✅ THÊM METHODS BỎ QUA GLOBAL QUERY FILTER
+        Task<IEnumerable<Employee>> GetAllWithoutFilterAsync();
+        Task<Employee> GetByUsernameWithoutFilterAsync(string username);
+
+        Task<(IEnumerable<Employee> data, int totalRecords)> GetPaginatedAsync(PaginationRequest request);
     }
 
 }

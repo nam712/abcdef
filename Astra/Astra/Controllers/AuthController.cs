@@ -92,7 +92,7 @@ namespace YourShopManagement.API.Controllers
         }
 
         /// <summary>
-        /// 🔑 Đăng nhập vào hệ thống
+        /// 🔑 Đăng nhập vào hệ thống (ShopOwner hoặc Employee)
         /// </summary>
         /// <remarks>
         /// Sample request:
@@ -102,6 +102,15 @@ namespace YourShopManagement.API.Controllers
         ///        "phone": "0912345678",
         ///        "password": "Password123"
         ///     }
+        ///     
+        /// Hệ thống sẽ tự động:
+        /// 1. Thử đăng nhập như ShopOwner (bằng phone)
+        /// 2. Nếu không thành công, thử đăng nhập như Employee (bằng username)
+        /// 3. Trả về JWT token và thông tin tương ứng với role
+        /// 
+        /// LUU Y: 
+        /// - ShopOwner: đăng nhập bằng PHONE + PASSWORD
+        /// - Employee: đăng nhập bằng USERNAME + PASSWORD (username có thể là phone number)
         /// </remarks>
         [HttpPost("login")]
         [AllowAnonymous]
@@ -110,6 +119,13 @@ namespace YourShopManagement.API.Controllers
         [Tags("🔐 Authentication")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
+            Console.WriteLine("========================================");
+            Console.WriteLine("🔑 LOGIN REQUEST RECEIVED");
+            Console.WriteLine($"Phone/Username: {dto.Phone}");
+            Console.WriteLine("1️⃣ Trying ShopOwner login (by phone)...");
+            Console.WriteLine("2️⃣ If failed, trying Employee login (by username)...");
+            Console.WriteLine("========================================");
+
             // Kiểm tra ModelState
             if (!ModelState.IsValid)
             {
@@ -128,27 +144,40 @@ namespace YourShopManagement.API.Controllers
 
             if (!result.Success)
             {
+                Console.WriteLine($"❌ Login failed: {result.Message}");
                 return Unauthorized(result);
+            }
+
+            Console.WriteLine($"✅ LOGIN SUCCESSFUL! UserType: {result.Data?.UserType}");
+            
+            if (result.Data?.UserType == "ShopOwner")
+            {
+                Console.WriteLine($"👑 ShopOwner: {result.Data.ShopOwner?.ShopOwnerName} - {result.Data.ShopOwner?.ShopName}");
+            }
+            else if (result.Data?.UserType == "Employee")
+            {
+                Console.WriteLine($"👤 Employee: {result.Data.Employee?.EmployeeName} - {result.Data.Employee?.Position}");
+                Console.WriteLine($"   Username: {result.Data.Employee?.Phone} (used as login username)");
             }
 
             return Ok(result);
         }
 
         /// <summary>
-        /// 👤 Lấy thông tin profile ShopOwner (yêu cầu JWT token)
+        /// 👤 Lấy thông tin profile (yêu cầu JWT token)
         /// </summary>
         [HttpGet("profile")]
-        [Authorize(Roles = "ShopOwner")]
+        [Authorize(Roles = "ShopOwner,Employee")]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
         [Tags("👤 User Profile")]
         public async Task<IActionResult> GetProfile()
         {
-            // Lấy ShopOwnerId từ JWT token
-            var shopOwnerIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            var userType = User.FindFirst("user_type")?.Value;
+            var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
-            if (string.IsNullOrEmpty(shopOwnerIdClaim) || !int.TryParse(shopOwnerIdClaim, out int shopOwnerId))
+            if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized(new
                 {
@@ -157,18 +186,42 @@ namespace YourShopManagement.API.Controllers
                 });
             }
 
-            var result = await _authService.GetProfileAsync(shopOwnerId);
-
-            if (!result.Success)
+            if (userType == "ShopOwner" && int.TryParse(userId, out int shopOwnerId))
             {
-                return NotFound(result);
+                var result = await _authService.GetProfileAsync(shopOwnerId);
+                return result.Success ? Ok(result) : NotFound(result);
+            }
+            else if (userType == "Employee")
+            {
+                // Trả về thông tin Employee từ token claims
+                return Ok(new
+                {
+                    success = true,
+                    message = "Thông tin nhân viên",
+                    data = new
+                    {
+                        userType = "Employee",
+                        employeeId = userId,
+                        employeeName = User.FindFirst(JwtRegisteredClaimNames.Name)?.Value,
+                        employeeCode = User.FindFirst("employee_code")?.Value,
+                        phone = User.FindFirst("phone")?.Value,
+                        position = User.FindFirst("position")?.Value,
+                        department = User.FindFirst("department")?.Value,
+                        permissions = User.FindFirst("permissions")?.Value,
+                        shopOwnerId = User.FindFirst("shop_owner_id")?.Value
+                    }
+                });
             }
 
-            return Ok(result);
+            return BadRequest(new
+            {
+                success = false,
+                message = "Loại người dùng không hợp lệ"
+            });
         }
 
         /// <summary>
-        /// 🔒 Đổi mật khẩu (yêu cầu JWT token)
+        /// 🔒 Đổi mật khẩu ShopOwner (yêu cầu JWT token)
         /// </summary>
         /// <remarks>
         /// Sample request:
@@ -225,34 +278,229 @@ namespace YourShopManagement.API.Controllers
         }
 
         /// <summary>
+        /// 🔒 Employee đổi mật khẩu của chính mình (yêu cầu JWT token)
+        /// </summary>
+        [HttpPut("employee/change-password")]
+        [Authorize(Roles = "Employee")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+        [Tags("👤 Employee")]
+        public async Task<IActionResult> EmployeeChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Dữ liệu không hợp lệ",
+                    errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList()
+                });
+            }
+
+            var employeeIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? 
+                                 User.FindFirst("employee_id")?.Value;
+
+            if (string.IsNullOrEmpty(employeeIdClaim) || !int.TryParse(employeeIdClaim, out int employeeId))
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "Token không hợp lệ hoặc đã hết hạn"
+                });
+            }
+
+            // ✅ GỌI SERVICE ĐỔI MẬT KHẨU
+            var result = await _authService.ChangeEmployeePasswordAsync(employeeId, dto);
+
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 🔍 Employee quên mật khẩu - Gửi mật khẩu mới qua SMS
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///     POST /api/auth/employee/forgot-password
+        ///     {
+        ///        "phone": "0912345678"
+        ///     }
+        /// </remarks>
+        [HttpPost("employee/forgot-password")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [Tags("👤 Employee")]
+        public async Task<IActionResult> EmployeeForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Dữ liệu không hợp lệ",
+                    errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList()
+                });
+            }
+
+            // ✅ GỌI SERVICE QUÊN MẬT KHẨU EMPLOYEE
+            var result = await _authService.EmployeeForgotPasswordAsync(dto);
+
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 🔍 Quên mật khẩu - Gửi mật khẩu mới qua SMS (ShopOwner only)
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///     POST /api/auth/forgot-password
+        ///     {
+        ///        "phone": "0912345678"
+        ///     }
+        /// </remarks>
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [Tags("🔐 Authentication")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            // Kiểm tra ModelState
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Dữ liệu không hợp lệ",
+                    errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList()
+                });
+            }
+
+            var result = await _authService.ForgotPasswordAsync(dto);
+
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
         /// 🧪 Test endpoint - Kiểm tra JWT token có hợp lệ không
         /// </summary>
         [HttpGet("test")]
-        [Authorize(Roles = "ShopOwner")]
+        [Authorize(Roles = "ShopOwner,Employee")]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
         [Tags("🧪 Testing")]
         public IActionResult TestAuth()
         {
-            var shopOwnerId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-            var shopOwnerName = User.FindFirst(JwtRegisteredClaimNames.Name)?.Value;
+            var userType = User.FindFirst("user_type")?.Value;
+            var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            var userName = User.FindFirst(JwtRegisteredClaimNames.Name)?.Value;
             var phone = User.FindFirst("phone")?.Value;
-            var shopName = User.FindFirst("shop_name")?.Value;
             var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+            // ✅ THÊM DEBUG LOGGING CHO EMPLOYEE
+            Console.WriteLine("🔍 [DEBUG] TestAuth called");
+            Console.WriteLine($"  - UserType: {userType}");
+            Console.WriteLine($"  - UserId (sub): {userId}");
+            Console.WriteLine($"  - UserName: {userName}");
+            Console.WriteLine($"  - Phone: {phone}");
+            Console.WriteLine($"  - Role: {role}");
+
+            var responseData = new
+            {
+                userId,
+                userName,
+                phone,
+                role,
+                userType
+            };
+
+            if (userType == "ShopOwner")
+            {
+                var shopName = User.FindFirst("shop_name")?.Value;
+                return Ok(new
+                {
+                    success = true,
+                    message = "Token hợp lệ - ShopOwner Authentication thành công! 👑",
+                    data = new
+                    {
+                        shopOwnerId = userId,
+                        shopOwnerName = userName,
+                        phone,
+                        shopName,
+                        role,
+                        userType,
+                        message = "Chủ shop có FULL quyền truy cập toàn bộ hệ thống"
+                    }
+                });
+            }
+            else if (userType == "Employee")
+            {
+                var employeeId = User.FindFirst("employee_id")?.Value; // ✅ LẤY TỪ CLAIM RIÊNG
+                var employeeCode = User.FindFirst("employee_code")?.Value;
+                var position = User.FindFirst("position")?.Value;
+                var department = User.FindFirst("department")?.Value;
+                var permissions = User.FindFirst("permissions")?.Value;
+                var shopOwnerId = User.FindFirst("shop_owner_id")?.Value;
+
+                Console.WriteLine($"🔍 [DEBUG] Employee claims:");
+                Console.WriteLine($"  - employee_id claim: {employeeId}");
+                Console.WriteLine($"  - sub claim: {userId}");
+                Console.WriteLine($"  - employee_code: {employeeCode}");
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Token hợp lệ - Employee Authentication thành công! 👤",
+                    data = new
+                    {
+                        employeeId = userId, // Sử dụng sub claim
+                        employeeIdFromClaim = employeeId, // Claim riêng để so sánh
+                        employeeName = userName,
+                        employeeCode,
+                        phone,
+                        position,
+                        department,
+                        permissions,
+                        shopOwnerId,
+                        role,
+                        userType,
+                        message = "Nhân viên có quyền truy cập theo phân quyền được cấp"
+                    }
+                });
+            }
 
             return Ok(new
             {
                 success = true,
-                message = "Token hợp lệ - Authentication thành công! ✅",
-                data = new
-                {
-                    shopOwnerId,
-                    shopOwnerName,
-                    phone,
-                    shopName,
-                    role,
-                    message = "Chủ shop có FULL quyền truy cập toàn bộ hệ thống"
-                }
+                message = "Token hợp lệ nhưng không xác định được loại người dùng",
+                data = responseData
             });
         }
 
@@ -260,7 +508,7 @@ namespace YourShopManagement.API.Controllers
         /// 🔄 Refresh token (Optional - để sau này mở rộng)
         /// </summary>
         [HttpPost("refresh-token")]
-        [Authorize(Roles = "ShopOwner")]
+        [Authorize(Roles = "ShopOwner,Employee")]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
         [Tags("🔐 Authentication")]
@@ -277,7 +525,7 @@ namespace YourShopManagement.API.Controllers
         /// 🚪 Logout (Client-side xóa token, server không cần xử lý)
         /// </summary>
         [HttpPost("logout")]
-        [Authorize(Roles = "ShopOwner")]
+        [Authorize(Roles = "ShopOwner,Employee")]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         [Tags("🔐 Authentication")]
         public IActionResult Logout()

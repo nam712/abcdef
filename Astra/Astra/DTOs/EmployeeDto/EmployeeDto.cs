@@ -6,6 +6,7 @@ namespace Backend.DTOs
     public class EmployeeDto
     {
         public int EmployeeId { get; set; }
+        public int ShopOwnerId { get; set; } // ✅ THÊM FIELD NÀY
         public string? EmployeeCode { get; set; }
         public string? EmployeeName { get; set; }
         public string? Phone { get; set; }

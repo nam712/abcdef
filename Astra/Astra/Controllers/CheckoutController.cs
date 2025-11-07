@@ -2,7 +2,7 @@
 using Backend.Services.Momo;
 using Microsoft.AspNetCore.Mvc;
 using Backend.Models;
-using Microsoft.AspNetCore.Authorization; 
+using YourShopManagement.API.DTOs.Common;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,10 +10,8 @@ using YourShopManagement.API.Data;
 
 namespace Backend.Controllers
 {
-   
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "ShopOwner")]
     public class CheckoutController : ControllerBase
     {
         private readonly IMomoService _momoService;
@@ -110,15 +108,15 @@ namespace Backend.Controllers
             }
 
             // 🔹 Chuyển khoản
-            if (paymentMethod.MethodCode == "bank_transfer")
-            {
-                return Ok(new
-                {
-                    method = paymentMethod.MethodName,
-                    paymentMethodId = paymentMethod.PaymentMethodId,
-                    message = "Vui lòng chuyển khoản theo thông tin hiển thị."
-                });
-            }
+            // if (paymentMethod.MethodCode == "bank_transfer")
+            // {
+            //     return Ok(new
+            //     {
+            //         method = paymentMethod.MethodName,
+            //         paymentMethodId = paymentMethod.PaymentMethodId,
+            //         message = "Vui lòng chuyển khoản theo thông tin hiển thị."
+            //     });
+            // }
 
             return BadRequest("Phương thức thanh toán chưa được hỗ trợ.");
         }
@@ -147,7 +145,7 @@ namespace Backend.Controllers
                 return StatusCode(500, new { success = false, message = "Không tìm thấy phương thức thanh toán MoMo trong hệ thống." });
             }
 
-            if (resultCode == "1006" || string.IsNullOrEmpty(resultCode)) // 1006 = user cancelled
+            if (resultCode == "0" || string.IsNullOrEmpty(resultCode)) // 1006 = user cancelled
             {
                 response.IsSuccess = true;
                 response.Message = "Thanh toán thành công";
@@ -219,11 +217,11 @@ namespace Backend.Controllers
         // 4️⃣ Lịch sử thanh toán
         // =============================
         [HttpGet("PaymentHistory")]
-        public IActionResult GetPaymentHistory()
+        public IActionResult GetPaymentHistory([FromQuery] PaginationRequest request)
         {
             try
             {
-                var history = _context.MomoInfos
+                var query = _context.MomoInfos
                     .Join(_context.PaymentMethods,
                         m => m.PaymentMethodId,
                         p => p.PaymentMethodId,
@@ -238,13 +236,37 @@ namespace Backend.Controllers
                             paymentMethod = p.MethodName,
                             paymentMethodCode = p.MethodCode
                         })
+                    .AsQueryable();
+
+                // Search filter
+                if (!string.IsNullOrWhiteSpace(request.Search))
+                {
+                    var searchLower = request.Search.ToLower();
+                    query = query.Where(x => x.orderId.ToLower().Contains(searchLower) ||
+                                            x.fullName.ToLower().Contains(searchLower) ||
+                                            x.orderInfo.ToLower().Contains(searchLower));
+                }
+
+                // Status filter (payment method code)
+                if (!string.IsNullOrWhiteSpace(request.Status))
+                {
+                    query = query.Where(x => x.paymentMethodCode == request.Status);
+                }
+
+                var totalRecords = query.Count();
+                
+                var data = query
                     .OrderByDescending(x => x.datePaid)
+                    .Skip((request.Page - 1) * request.PageSize)
+                    .Take(request.PageSize)
                     .ToList();
+
+                var result = PaginatedResponse<object>.Create(data, request.Page, request.PageSize, totalRecords);
 
                 return Ok(new
                 {
                     success = true,
-                    data = history
+                    data = result
                 });
             }
             catch (Exception ex)
@@ -257,6 +279,48 @@ namespace Backend.Controllers
                 });
             }
         }
+
+        // Lấy tất cả lịch sử thanh toán (không phân trang)
+        // [HttpGet("PaymentHistory")]
+        // public IActionResult GetPaymentHistory()
+        // {
+        //     try
+        //     {
+        //         var history = _context.MomoInfos
+        //             .Join(_context.PaymentMethods,
+        //                 m => m.PaymentMethodId,
+        //                 p => p.PaymentMethodId,
+        //                 (m, p) => new
+        //                 {
+        //                     id = m.Id,
+        //                     orderId = m.OrderId,
+        //                     fullName = m.Fullname,
+        //                     amount = m.Amount,
+        //                     orderInfo = m.OrderInfo,
+        //                     datePaid = m.DatePaid,
+        //                     paymentMethod = p.MethodName,
+        //                     paymentMethodCode = p.MethodCode
+        //                 })
+        //             .OrderByDescending(x => x.datePaid)
+        //             .ToList();
+
+        //         return Ok(new
+        //         {
+        //             success = true,
+        //             data = history
+        //         });
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return StatusCode(500, new
+        //         {
+        //             success = false,
+        //             message = "Lỗi khi lấy lịch sử thanh toán",
+        //             error = ex.Message
+        //         });
+        //     }
+        // }
+
 
         // =============================
         // 🔹 Lưu thông tin MoMo vào DB

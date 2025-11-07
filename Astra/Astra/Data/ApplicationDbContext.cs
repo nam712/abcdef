@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using YourShopManagement.API.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace YourShopManagement.API.Data
 {
@@ -392,6 +393,11 @@ namespace YourShopManagement.API.Data
             });
            
             // Cấu hình MomoInfo
+            var dateTimeConverter = new ValueConverter<DateTime?, DateTime?>(
+                v => v.HasValue ? v.Value.ToUniversalTime() : v,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v
+            );
+            
             modelBuilder.Entity<MomoInfo>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -399,19 +405,13 @@ namespace YourShopManagement.API.Data
                 entity.Property(e => e.OrderInfo).IsRequired();
                 entity.Property(e => e.PaymentMethodId).IsRequired();
                 entity.Property(e => e.DatePaid)
-                    .HasConversion(
-                        v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
-                        v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null
-                    );
+                      .HasConversion(dateTimeConverter);
 
-                // Cấu hình foreign key relationship
                 entity.HasOne(m => m.PaymentMethod)
-                    .WithMany()
-                    .HasForeignKey(m => m.PaymentMethodId)
-                    .OnDelete(DeleteBehavior.Restrict);
-                
-            }
-             );
+                      .WithMany()
+                      .HasForeignKey(m => m.PaymentMethodId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
             modelBuilder.Entity<MomoInfo>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
 
             // ==================== NOTIFICATION ====================
@@ -432,7 +432,7 @@ namespace YourShopManagement.API.Data
                     .HasDefaultValue(false);
 
                 entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                 entity.HasIndex(e => e.CreatedAt)
                     .HasDatabaseName("IX_Notifications_CreatedAt");
@@ -449,12 +449,14 @@ namespace YourShopManagement.API.Data
         // ==================== Override SaveChanges để tự động cập nhật UpdatedAt ====================
         public override int SaveChanges()
         {
+            ConvertDateTimesToUtc();
             UpdateTimestamps();
             return base.SaveChanges();
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
+            ConvertDateTimesToUtc();
             UpdateTimestamps();
             return base.SaveChangesAsync(cancellationToken);
         }
@@ -480,6 +482,51 @@ namespace YourShopManagement.API.Data
                     entry.Property("ShopOwnerId").CurrentValue = _currentShopOwnerId;
                 }
 
+            }
+        }
+
+    
+        /// <summary>
+        /// ✅ Helper method: Tự động chuyển tất cả DateTime properties sang UTC trước khi save
+        /// </summary>
+        private void ConvertDateTimesToUtc()
+        {
+            var entries = ChangeTracker.Entries()
+                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
+
+            foreach (var entry in entries)
+            {
+                foreach (var property in entry.Properties)
+                {
+                    if (property.Metadata.ClrType == typeof(DateTime))
+                    {
+                        var value = (DateTime)property.CurrentValue;
+                        if (value.Kind == DateTimeKind.Unspecified)
+                        {
+                            property.CurrentValue = DateTime.SpecifyKind(value, DateTimeKind.Utc);
+                        }
+                        else if (value.Kind == DateTimeKind.Local)
+                        {
+                            property.CurrentValue = value.ToUniversalTime();
+                        }
+                    }
+                    else if (property.Metadata.ClrType == typeof(DateTime?))
+                    {
+                        var nullableValue = (DateTime?)property.CurrentValue;
+                        if (nullableValue.HasValue)
+                        {
+                            var value = nullableValue.Value;
+                            if (value.Kind == DateTimeKind.Unspecified)
+                            {
+                                property.CurrentValue = DateTime.SpecifyKind(value, DateTimeKind.Utc);
+                            }
+                            else if (value.Kind == DateTimeKind.Local)
+                            {
+                                property.CurrentValue = value.ToUniversalTime();
+                            }
+                        }
+                    }
+                }
             }
         }
     }

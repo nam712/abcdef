@@ -6,6 +6,7 @@ using YourShopManagement.API.DTOs;
 using YourShopManagement.API.DTOs.Auth;  
 using YourShopManagement.API.Models;
 using YourShopManagement.API.Repositories;
+using YourShopManagement.API.DTOs.Common;
 
 namespace YourShopManagement.API.Services
 {
@@ -68,6 +69,14 @@ namespace YourShopManagement.API.Services
         {
             var customers = await _repository.GetByStatusAsync(status);
             return _mapper.Map<IEnumerable<CustomerDto>>(customers);
+        }
+
+        public async Task<PaginatedResponse<CustomerDto>> GetPaginatedAsync(PaginationRequest request)
+        {
+            var (data, totalRecords) = await _repository.GetPaginatedAsync(request);
+            var customerDtos = _mapper.Map<IEnumerable<CustomerDto>>(data);
+            
+            return PaginatedResponse<CustomerDto>.Create(customerDtos, request.Page, request.PageSize, totalRecords);
         }
     }
 

@@ -2,6 +2,7 @@ using YourShopManagement.API.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using YourShopManagement.API.DTOs.Common;
 
 namespace YourShopManagement.API.Repositories
 {
@@ -16,5 +17,6 @@ namespace YourShopManagement.API.Repositories
         Task<IEnumerable<Customer>> SearchAsync(string keyword);
         Task<IEnumerable<Customer>> GetBySegmentAsync(string segment);
         Task<IEnumerable<Customer>> GetByStatusAsync(string status);
+        Task<(IEnumerable<Customer> data, int totalRecords)> GetPaginatedAsync(PaginationRequest request);
     }
 }

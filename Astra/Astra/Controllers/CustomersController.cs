@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using YourShopManagement.API.DTOs.Common;
 
 namespace YourShopManagement.API.Controllers  
 {
@@ -43,6 +44,20 @@ namespace YourShopManagement.API.Controllers
             }
         }
 
+        [HttpGet("paginated")]
+        public async Task<ActionResult<PaginatedResponse<CustomerDto>>> GetPaginated([FromQuery] PaginationRequest request)
+        {
+            try
+            {
+                var result = await _service.GetPaginatedAsync(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi lấy danh sách khách hàng phân trang", detail = ex.Message });
+            }
+        }
+
         // GET /api/customers/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<CustomerDto>> GetById(int id)
@@ -61,7 +76,7 @@ namespace YourShopManagement.API.Controllers
             }
         }
 
-        // GET /api/customers/search?name=
+        // // GET /api/customers/search?name=
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<CustomerDto>>> Search([FromQuery] string name)
         {

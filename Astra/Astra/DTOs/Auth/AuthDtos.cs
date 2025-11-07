@@ -58,9 +58,9 @@ namespace YourShopManagement.API.DTOs.Auth
     // ==================== LOGIN DTO ====================
     public class LoginDto
     {
-        [Required(ErrorMessage = "Số điện thoại không được để trống")]
-        [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
-        public string Phone { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Số điện thoại/Username không được để trống")]
+        [MaxLength(50, ErrorMessage = "Số điện thoại/Username không được quá 50 ký tự")]
+        public string Phone { get; set; } = string.Empty; // Dùng cho cả phone (ShopOwner) và username (Employee)
 
         [Required(ErrorMessage = "Mật khẩu không được để trống")]
         public string Password { get; set; } = string.Empty;
@@ -73,7 +73,9 @@ namespace YourShopManagement.API.DTOs.Auth
         public string Message { get; set; } = string.Empty;
         public string? Token { get; set; }
         public DateTime? TokenExpiry { get; set; }
+        public string UserType { get; set; } = string.Empty; // "ShopOwner" hoặc "Employee"
         public ShopOwnerInfoDto? ShopOwner { get; set; }
+        public EmployeeInfoDto? Employee { get; set; }
     }
 
     // ==================== SHOP OWNER INFO DTO ====================
@@ -89,6 +91,24 @@ namespace YourShopManagement.API.DTOs.Auth
         public string Status { get; set; } = string.Empty;
         public int? BusinessCategoryId { get; set; }
         public string? BusinessCategoryName { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    // ==================== EMPLOYEE INFO DTO ====================
+    public class EmployeeInfoDto
+    {
+        public int EmployeeId { get; set; }
+        public int ShopOwnerId { get; set; }
+        public string EmployeeCode { get; set; } = string.Empty;
+        public string EmployeeName { get; set; } = string.Empty;
+        public string? Phone { get; set; }
+        public string? Email { get; set; }
+        public string? Position { get; set; }
+        public string? Department { get; set; }
+        public string? Permissions { get; set; }
+        public string? AvatarUrl { get; set; }
+        public string WorkStatus { get; set; } = string.Empty;
+        public string ShopName { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
     }
 

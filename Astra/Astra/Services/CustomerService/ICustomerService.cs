@@ -2,6 +2,7 @@ using YourShopManagement.API.DTOs;
 // Interface for Customer service with CRUD and search methods
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using YourShopManagement.API.DTOs.Common;
 
 namespace YourShopManagement.API.Services
 {
@@ -17,6 +18,7 @@ namespace YourShopManagement.API.Services
         Task<IEnumerable<CustomerDto>> SearchAsync(string keyword);
         Task<IEnumerable<CustomerDto>> GetBySegmentAsync(string segment);
         Task<IEnumerable<CustomerDto>> GetByStatusAsync(string status);
+        Task<PaginatedResponse<CustomerDto>> GetPaginatedAsync(PaginationRequest request);
     }
 
 }

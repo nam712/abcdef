@@ -1,6 +1,5 @@
 using System;
-using System.Security.Cryptography;
-using System.Text;
+using BCrypt.Net;
 
 namespace YourShopManagement.API.Helpers
 {
@@ -10,7 +9,7 @@ namespace YourShopManagement.API.Helpers
     public static class PasswordHelper
     {
         /// <summary>
-        /// Hash password sử dụng SHA256
+        /// Hash password sử dụng BCrypt
         /// </summary>
         /// <param name="password">Mật khẩu gốc</param>
         /// <returns>Mật khẩu đã hash</returns>
@@ -19,11 +18,16 @@ namespace YourShopManagement.API.Helpers
             if (string.IsNullOrEmpty(password))
                 throw new ArgumentException("Password cannot be null or empty", nameof(password));
 
-            using (var sha256 = SHA256.Create())
-            {
-                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return Convert.ToBase64String(hashedBytes);
-            }
+            // ✅ QUAN TRỌNG: Dùng BCrypt với WorkFactor = 11 (mặc định)
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 11);
+            
+            Console.WriteLine($"🔒 [DEBUG] Password hashed successfully");
+            Console.WriteLine($"  - Original length: {password.Length}");
+            Console.WriteLine($"  - Hashed length: {hashedPassword.Length}");
+            Console.WriteLine($"  - Starts with '$2': {hashedPassword.StartsWith("$2")}");
+            Console.WriteLine($"  - First 10 chars: {hashedPassword.Substring(0, Math.Min(10, hashedPassword.Length))}...");
+            
+            return hashedPassword;
         }
 
         /// <summary>
@@ -37,8 +41,23 @@ namespace YourShopManagement.API.Helpers
             if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(hashedPassword))
                 return false;
 
-            var hashedInput = HashPassword(password);
-            return hashedInput == hashedPassword;
+            try
+            {
+                Console.WriteLine($"🔍 [DEBUG] Verifying password with BCrypt");
+                Console.WriteLine($"  - Input password length: {password.Length}");
+                Console.WriteLine($"  - Hashed password length: {hashedPassword.Length}");
+                Console.WriteLine($"  - Hashed starts with '$2': {hashedPassword.StartsWith("$2")}");
+                
+                bool result = BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+                
+                Console.WriteLine($"  - Verification result: {result}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ [DEBUG] BCrypt verification error: {ex.Message}");
+                return false;
+            }
         }
     }
 }
