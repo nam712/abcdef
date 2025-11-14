@@ -346,7 +346,7 @@ namespace Backend.Controllers
         }
 
         [HttpPost("upload")]
-        [Authorize(Roles = "ShopOwner")]
+        [Authorize(Roles = "ShopOwner, Employee")]
         public async Task<ActionResult<EmployeeDto>> UploadEmployee([FromForm] EmployeeDto employeeDto)
         {
             try
