@@ -75,22 +75,7 @@ namespace YourShopManagement.API.Services
                     }
                 }
 
-                // 3. Kiểm tra Business Category có tồn tại không
-                if (dto.BusinessCategoryId.HasValue)
-                {
-                    var categoryExists = await _context.BusinessCategories
-                        .AnyAsync(c => c.CategoryId == dto.BusinessCategoryId.Value);
-
-                    if (!categoryExists)
-                    {
-                        return ApiResponse<LoginResponseDto>.FailResponse(
-                            "Ngành hàng không tồn tại",
-                            new List<string> { "Business category not found" }
-                        );
-                    }
-                }
-
-                // 4. Kiểm tra điều khoản
+                // 3. Kiểm tra điều khoản
                 if (!dto.TermsAndConditionsAgreed)
                 {
                     return ApiResponse<LoginResponseDto>.FailResponse(
@@ -99,10 +84,10 @@ namespace YourShopManagement.API.Services
                     );
                 }
 
-                // 5. Hash password
+                // 4. Hash password
                 var hashedPassword = PasswordHelper.HashPassword(dto.Password);
 
-                // 6. Tạo ShopOwner mới
+                // 5. Tạo ShopOwner mới
                 var shopOwner = new ShopOwner
                 {
                     ShopOwnerName = dto.ShopOwnerName,
@@ -112,10 +97,6 @@ namespace YourShopManagement.API.Services
                     DateOfBirth = dto.DateOfBirth,
                     Gender = dto.Gender,
                     TaxCode = dto.TaxCode,
-                    BusinessCategoryId = dto.BusinessCategoryId,
-                    ShopName = dto.ShopName,
-                    ShopAddress = dto.ShopAddress,
-                    ShopDescription = dto.ShopDescription,
                     Password = hashedPassword,
                     TermsAndConditionsAgreed = dto.TermsAndConditionsAgreed,
                     Status = "active",
@@ -126,14 +107,9 @@ namespace YourShopManagement.API.Services
                 _context.ShopOwners.Add(shopOwner);
                 await _context.SaveChangesAsync();
 
-                // 7. Generate JWT Token
+                // 6. Generate JWT Token
                 var token = _jwtHelper.GenerateToken(shopOwner);
                 var tokenExpiry = DateTime.UtcNow.AddHours(1);
-
-                // 8. Load lại với BusinessCategory
-                var createdShopOwner = await _context.ShopOwners
-                    .Include(s => s.BusinessCategory)
-                    .FirstOrDefaultAsync(s => s.ShopOwnerId == shopOwner.ShopOwnerId);
 
                 var response = new LoginResponseDto
                 {
@@ -143,17 +119,13 @@ namespace YourShopManagement.API.Services
                     TokenExpiry = tokenExpiry,
                     ShopOwner = new ShopOwnerInfoDto
                     {
-                        ShopOwnerId = createdShopOwner!.ShopOwnerId,
-                        ShopOwnerName = createdShopOwner.ShopOwnerName,
-                        Phone = createdShopOwner.Phone,
-                        Email = createdShopOwner.Email,
-                        ShopName = createdShopOwner.ShopName,
-                        ShopLogoUrl = createdShopOwner.ShopLogoUrl,
-                        AvatarUrl = createdShopOwner.AvatarUrl,
-                        Status = createdShopOwner.Status,
-                        BusinessCategoryId = createdShopOwner.BusinessCategoryId,
-                        BusinessCategoryName = createdShopOwner.BusinessCategory?.CategoryName,
-                        CreatedAt = createdShopOwner.CreatedAt
+                        ShopOwnerId = shopOwner.ShopOwnerId,
+                        ShopOwnerName = shopOwner.ShopOwnerName,
+                        Phone = shopOwner.Phone,
+                        Email = shopOwner.Email,
+                        AvatarUrl = shopOwner.AvatarUrl,
+                        Status = shopOwner.Status,
+                        CreatedAt = shopOwner.CreatedAt
                     }
                 };
 
@@ -212,7 +184,6 @@ namespace YourShopManagement.API.Services
             try
             {
                 var shopOwner = await _context.ShopOwners
-                    .Include(s => s.BusinessCategory)
                     .FirstOrDefaultAsync(s => s.Phone == dto.Phone);
 
                 if (shopOwner == null || shopOwner.Status != "active")
@@ -346,12 +317,8 @@ namespace YourShopManagement.API.Services
                         ShopOwnerName = shopOwner.ShopOwnerName,
                         Phone = shopOwner.Phone,
                         Email = shopOwner.Email,
-                        ShopName = shopOwner.ShopName,
-                        ShopLogoUrl = shopOwner.ShopLogoUrl,
                         AvatarUrl = shopOwner.AvatarUrl,
                         Status = shopOwner.Status,
-                        BusinessCategoryId = shopOwner.BusinessCategoryId,
-                        BusinessCategoryName = shopOwner.BusinessCategory?.CategoryName,
                         CreatedAt = shopOwner.CreatedAt
                     }
                 };
@@ -391,7 +358,6 @@ namespace YourShopManagement.API.Services
 
                 var employee = await _context.Employees
                     .IgnoreQueryFilters()
-                    .Include(e => e.ShopOwner)
                     .FirstOrDefaultAsync(e => e.Username == dto.Phone);
 
                 Console.WriteLine($"🔍 [DEBUG] Employee found (ignoring filters): {employee != null}");
@@ -402,7 +368,6 @@ namespace YourShopManagement.API.Services
                     Console.WriteLine($"  - ID: {employee.EmployeeId}");
                     Console.WriteLine($"  - Name: {employee.EmployeeName}");
                     Console.WriteLine($"  - Username: {employee.Username}");
-                    Console.WriteLine($"  - ShopOwnerId: {employee.ShopOwnerId}");
                     Console.WriteLine($"  - WorkStatus: {employee.WorkStatus}");
                     Console.WriteLine($"  - Has Password: {!string.IsNullOrEmpty(employee.Password)}");
                     Console.WriteLine($"  - Password Length: {employee.Password?.Length ?? 0}");
@@ -506,7 +471,6 @@ namespace YourShopManagement.API.Services
                     Employee = new EmployeeInfoDto
                     {
                         EmployeeId = employee.EmployeeId,
-                        ShopOwnerId = employee.ShopOwnerId,
                         EmployeeCode = employee.EmployeeCode,
                         EmployeeName = employee.EmployeeName,
                         Phone = employee.Phone,
@@ -516,7 +480,7 @@ namespace YourShopManagement.API.Services
                         Permissions = employee.Permissions,
                         AvatarUrl = employee.AvatarUrl,
                         WorkStatus = employee.WorkStatus,
-                        ShopName = employee.ShopOwner?.ShopName ?? "",
+                        ShopName = "N/A", // ShopOwner không còn trường ShopName
                         CreatedAt = employee.CreatedAt
                     }
                 };
@@ -540,7 +504,6 @@ namespace YourShopManagement.API.Services
             try
             {
                 var shopOwner = await _context.ShopOwners
-                    .Include(s => s.BusinessCategory)
                     .FirstOrDefaultAsync(s => s.ShopOwnerId == shopOwnerId);
 
                 if (shopOwner == null)
@@ -554,12 +517,8 @@ namespace YourShopManagement.API.Services
                     ShopOwnerName = shopOwner.ShopOwnerName,
                     Phone = shopOwner.Phone,
                     Email = shopOwner.Email,
-                    ShopName = shopOwner.ShopName,
-                    ShopLogoUrl = shopOwner.ShopLogoUrl,
                     AvatarUrl = shopOwner.AvatarUrl,
                     Status = shopOwner.Status,
-                    BusinessCategoryId = shopOwner.BusinessCategoryId,
-                    BusinessCategoryName = shopOwner.BusinessCategory?.CategoryName,
                     CreatedAt = shopOwner.CreatedAt
                 };
 
@@ -703,13 +662,17 @@ namespace YourShopManagement.API.Services
 
                 // Verify mật khẩu cũ
                 bool isOldPasswordValid;
-                if (employee.Password.StartsWith("$2")) // Đã được hash
+                if (employee.Password != null && employee.Password.StartsWith("$2")) // Đã được hash
                 {
                     isOldPasswordValid = PasswordHelper.VerifyPassword(dto.OldPassword, employee.Password);
                 }
-                else // Plain text (tương thích cũ)
+                else if (employee.Password != null) // Plain text (tương thích cũ)
                 {
                     isOldPasswordValid = employee.Password == dto.OldPassword;
+                }
+                else
+                {
+                    return ApiResponse<bool>.FailResponse("Mật khẩu không hợp lệ");
                 }
 
                 if (!isOldPasswordValid)

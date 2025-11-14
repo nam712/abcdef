@@ -20,7 +20,6 @@ namespace YourShopManagement.API.Repositories
         {
             return await _context.Products
                 .Include(p => p.Category)
-                .Include(p => p.Supplier)
                 .ToListAsync();
         }
 
@@ -28,7 +27,6 @@ namespace YourShopManagement.API.Repositories
         {
             return await _context.Products
                 .Include(p => p.Category)
-                .Include(p => p.Supplier)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
         }
 
@@ -59,8 +57,8 @@ namespace YourShopManagement.API.Repositories
         {
             return await _context.Products
                 .Where(p => p.ProductName.Contains(keyword) ||
-                            p.Description.Contains(keyword) ||
-                            p.Brand.Contains(keyword))
+                            (p.Description != null && p.Description.Contains(keyword)) ||
+                            (p.Brand != null && p.Brand.Contains(keyword)))
                 .ToListAsync();
         }
 
@@ -71,10 +69,10 @@ namespace YourShopManagement.API.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Product>> GetBySupplierAsync(int supplierId)
+        public async Task<IEnumerable<Product>> GetBySupplierAsync(string supplierName)
         {
             return await _context.Products
-                .Where(p => p.SupplierId == supplierId)
+                .Where(p => p.SupplierName == supplierName)
                 .ToListAsync();
         }
     }

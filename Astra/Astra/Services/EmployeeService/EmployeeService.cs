@@ -6,6 +6,7 @@ using Backend.DTOs;
 using Backend.Models;
 using Backend.Repositories;
 using YourShopManagement.API.DTOs.Common;
+using Microsoft.AspNetCore.Http;
 
 namespace Backend.Services
 {
@@ -14,12 +15,20 @@ namespace Backend.Services
         private readonly IEmployeeRepository _repository;
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _env;
+        private readonly int _currentShopOwnerId;
 
-        public EmployeeService(IEmployeeRepository repository, IMapper mapper, IWebHostEnvironment env)
+        public EmployeeService(IEmployeeRepository repository, IMapper mapper, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor)
         {
             _repository = repository;
             _mapper = mapper;
             _env = env;
+            
+            // 🔒 Lấy shop_owner_id từ JWT token
+            var claim = httpContextAccessor.HttpContext?.User?.FindFirst("shop_owner_id")?.Value;
+            if (int.TryParse(claim, out var id))
+                _currentShopOwnerId = id;
+            else
+                _currentShopOwnerId = 0;
         }
 
         public async Task<EmployeeDto> GetByIdAsync(int employeeId)
@@ -30,6 +39,7 @@ namespace Backend.Services
 
         public async Task<IEnumerable<EmployeeDto>> GetAllAsync()
         {
+            // 🔒 Auto-filtered by ApplicationDbContext
             var employees = await _repository.GetAllAsync();
             return _mapper.Map<IEnumerable<EmployeeDto>>(employees);
         }
@@ -37,6 +47,9 @@ namespace Backend.Services
         public async Task<EmployeeDto> AddAsync(EmployeeDto employeeDto)
         {
             var employee = _mapper.Map<Employee>(employeeDto);
+            
+            // 🔒 Set shop_owner_id from current user
+            employee.ShopOwnerId = _currentShopOwnerId;
             
             // ✅ THÊM: Hash password trước khi lưu (nếu có password)
             if (!string.IsNullOrEmpty(employee.Password))
@@ -307,8 +320,7 @@ namespace Backend.Services
                         HasPassword = !string.IsNullOrEmpty(e.Password),
                         PasswordFirst10 = !string.IsNullOrEmpty(e.Password) ? 
                             e.Password.Substring(0, Math.Min(10, e.Password.Length)) + "..." : "",
-                        e.CreatedAt,
-                        e.ShopOwnerId
+                        e.CreatedAt
                     }).ToList()
                 };
             }

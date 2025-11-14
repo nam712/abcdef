@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Backend.Models;
 
 namespace YourShopManagement.API.Models
 {
@@ -66,26 +68,6 @@ namespace YourShopManagement.API.Models
         [Column("business_license_issued_place")]
         public string? BusinessLicenseIssuedPlace { get; set; }
 
-        [Column("business_category_id")]
-        public int? BusinessCategoryId { get; set; }
-
-        [Required(ErrorMessage = "Tên cửa hàng không được để trống")]
-        [MaxLength(255)]
-        [Column("shop_name")]
-        public string ShopName { get; set; } = string.Empty;
-
-        [MaxLength(255)]
-        [Column("shop_logo_url")]
-        public string? ShopLogoUrl { get; set; }
-
-        [MaxLength(255)]
-        [Column("shop_description")]
-        public string? ShopDescription { get; set; }
-
-        [MaxLength(255)]
-        [Column("shop_address")]
-        public string? ShopAddress { get; set; }
-
         [Required(ErrorMessage = "Mật khẩu không được để trống")]
         [MaxLength(255)]
         [Column("password")]
@@ -116,7 +98,7 @@ namespace YourShopManagement.API.Models
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation Properties
-        [ForeignKey("BusinessCategoryId")]
-        public virtual BusinessCategory? BusinessCategory { get; set; }
+        public virtual ICollection<Shop>? Shops { get; set; }
+        public virtual ICollection<Employee>? Employees { get; set; }
     }
 }

@@ -136,9 +136,13 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
 builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
 
-// Notification
-builder.Services.AddScoped<Backend.Repositories.INotificationRepository, Backend.Repositories.NotificationRepository>();
-builder.Services.AddScoped<Backend.Services.NotificationService.INotificationService, Backend.Services.NotificationService.NotificationService>();
+// Shop
+builder.Services.AddScoped<YourShopManagement.API.Repositories.ShopRepository.IShopRepository, YourShopManagement.API.Repositories.ShopRepository.ShopRepository>();
+builder.Services.AddScoped<YourShopManagement.API.Services.ShopService.IShopService, YourShopManagement.API.Services.ShopService.ShopService>();
+
+// Promotion
+builder.Services.AddScoped<YourShopManagement.API.Repositories.PromotionRepository.IPromotionRepository, YourShopManagement.API.Repositories.PromotionRepository.PromotionRepository>();
+builder.Services.AddScoped<YourShopManagement.API.Services.PromotionService.IPromotionService, YourShopManagement.API.Services.PromotionService.PromotionService>();
 
 // ==================== 5. SWAGGER ====================
 builder.Services.AddEndpointsApiExplorer();

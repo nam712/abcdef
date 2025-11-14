@@ -121,7 +121,12 @@ namespace YourShopManagement.API.Controllers
             try
             {
                 await _service.UpdateAsync(customerDto);
-                return NoContent();
+                return Ok(new { 
+                    message = "Cập nhật khách hàng thành công", 
+                    customerId = id,
+                    customerCode = customerDto.CustomerCode,
+                    customerName = customerDto.CustomerName
+                });
             }
             catch (Exception ex)
             {
@@ -135,8 +140,17 @@ namespace YourShopManagement.API.Controllers
         {
             try
             {
+                var customer = await _service.GetByIdAsync(id);
+                if (customer == null)
+                    return NotFound(new { message = $"Không tìm thấy khách hàng với ID = {id}" });
+
                 await _service.DeleteAsync(id);
-                return NoContent();
+                return Ok(new { 
+                    message = "Xóa khách hàng thành công", 
+                    customerId = id,
+                    customerCode = customer.CustomerCode,
+                    customerName = customer.CustomerName
+                });
             }
             catch (Exception ex)
             {

@@ -16,7 +16,7 @@ namespace YourShopManagement.API.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int PurchaseOrderId { get; set; }
 
-        // ✅ Liên kết chủ shop (NOT NULL)
+        // 🔒 Multi-tenancy: Phiếu nhập thuộc shop_owner nào
         [Required]
         [Column("shop_owner_id")]
         public int ShopOwnerId { get; set; }
@@ -63,12 +63,9 @@ namespace YourShopManagement.API.Models
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // ✅ NAVIGATION PROPERTIES
+        // Navigation Properties (không có FK đến ShopOwner)
         [ForeignKey("SupplierId")]
         public virtual Supplier Supplier { get; set; } = null!;
-
-        [ForeignKey("ShopOwnerId")]
-        public virtual ShopOwner ShopOwner { get; set; } = null!;
 
         public virtual ICollection<PurchaseOrderDetail>? PurchaseOrderDetails { get; set; }
     }

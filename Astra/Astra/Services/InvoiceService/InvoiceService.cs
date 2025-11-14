@@ -53,29 +53,29 @@ namespace YourShopManagement.API.Services.InvoiceService
                     );
                 }
 
-                // 2. Kiểm tra khách hàng có tồn tại không
-                var customer = await _context.Customers
-                    .FirstOrDefaultAsync(c => c.CustomerId == dto.CustomerId);
+                // 2. Kiểm tra nhân viên (BẮT BUỘC)
+                var employeeExists = await _context.Employees
+                    .AnyAsync(e => e.EmployeeId == dto.EmployeeId);
 
-                if (customer == null)
+                if (!employeeExists)
                 {
                     return ApiResponse<InvoiceResponseDto>.FailResponse(
-                        "Khách hàng không tồn tại",
-                        "Customer not found"
+                        "Nhân viên không tồn tại",
+                        "Employee not found"
                     );
                 }
 
-                // 3. Kiểm tra nhân viên (nếu có)
-                if (dto.EmployeeId.HasValue)
+                // 3. Kiểm tra khách hàng (nếu có)
+                if (dto.CustomerId.HasValue)
                 {
-                    var employeeExists = await _context.Employees
-                        .AnyAsync(e => e.EmployeeId == dto.EmployeeId.Value);
+                    var customer = await _context.Customers
+                        .FirstOrDefaultAsync(c => c.CustomerId == dto.CustomerId.Value);
 
-                    if (!employeeExists)
+                    if (customer == null)
                     {
                         return ApiResponse<InvoiceResponseDto>.FailResponse(
-                            "Nhân viên không tồn tại",
-                            "Employee not found"
+                            "Khách hàng không tồn tại",
+                            "Customer not found"
                         );
                     }
                 }
@@ -180,17 +180,24 @@ namespace YourShopManagement.API.Services.InvoiceService
                     invoice.PaymentStatus = "unpaid";
                 }
 
-                // 10. Cập nhật thông tin khách hàng
-                customer.TotalPurchaseAmount += invoice.FinalAmount;
-                customer.TotalPurchaseCount += 1;
-                
-                // Cập nhật công nợ nếu chưa thanh toán đủ
-                if (invoice.PaymentStatus != "paid")
+                // 10. Cập nhật thông tin khách hàng (nếu có)
+                if (dto.CustomerId.HasValue)
                 {
-                    customer.TotalDebt += (invoice.FinalAmount - invoice.AmountPaid);
+                    var customer = await _context.Customers.FindAsync(dto.CustomerId.Value);
+                    if (customer != null)
+                    {
+                        customer.TotalPurchaseAmount += invoice.FinalAmount;
+                        customer.TotalPurchaseCount += 1;
+                        
+                        // Cập nhật công nợ nếu chưa thanh toán đủ
+                        if (invoice.PaymentStatus != "paid")
+                        {
+                            customer.TotalDebt += (invoice.FinalAmount - invoice.AmountPaid);
+                        }
+                        
+                        customer.UpdatedAt = DateTime.UtcNow;
+                    }
                 }
-                
-                customer.UpdatedAt = DateTime.UtcNow;
 
                 // 11. Lưu vào database
                 _context.Invoices.Add(invoice);
@@ -252,6 +259,7 @@ namespace YourShopManagement.API.Services.InvoiceService
                 .Include(i => i.Customer)
                 .Include(i => i.Employee)
                 .Include(i => i.PaymentMethod)
+                .Include(i => i.Shop)
                 .Include(i => i.InvoiceDetails)
                     .ThenInclude(d => d.Product)
                 .FirstOrDefaultAsync(i => i.InvoiceId == id);
@@ -262,9 +270,11 @@ namespace YourShopManagement.API.Services.InvoiceService
             {
                 InvoiceId = invoice.InvoiceId,
                 InvoiceCode = invoice.InvoiceCode,
+                ShopId = invoice.ShopId,
+                ShopName = invoice.Shop?.ShopName,
                 CustomerId = invoice.CustomerId,
-                CustomerName = invoice.Customer.CustomerName,
-                CustomerPhone = invoice.Customer.Phone,
+                CustomerName = invoice.Customer?.CustomerName ?? "Khách lẻ",
+                CustomerPhone = invoice.Customer?.Phone,
                 EmployeeId = invoice.EmployeeId,
                 EmployeeName = invoice.Employee?.EmployeeName,
                 PaymentMethodId = invoice.PaymentMethodId,
@@ -305,7 +315,7 @@ namespace YourShopManagement.API.Services.InvoiceService
                     {
                         InvoiceId = i.InvoiceId,
                         InvoiceCode = i.InvoiceCode,
-                        CustomerName = i.Customer.CustomerName,
+                        CustomerName = i.Customer != null ? i.Customer.CustomerName : "Khách lẻ",
                         EmployeeName = i.Employee != null ? i.Employee.EmployeeName : null,
                         InvoiceDate = i.InvoiceDate,
                         TotalAmount = i.TotalAmount,
@@ -418,12 +428,12 @@ namespace YourShopManagement.API.Services.InvoiceService
                 invoice.PaymentStatus = "paid";
                 invoice.UpdatedAt = DateTime.UtcNow;
 
-                // Giảm công nợ khách hàng
-                if (invoice.Customer.TotalDebt > 0)
+                // Giảm công nợ khách hàng (nếu có)
+                if (invoice.Customer != null && invoice.Customer.TotalDebt > 0)
                 {
                     invoice.Customer.TotalDebt = Math.Max(0, invoice.Customer.TotalDebt - invoice.FinalAmount);
+                    invoice.Customer.UpdatedAt = DateTime.UtcNow;
                 }
-                invoice.Customer.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -485,11 +495,14 @@ namespace YourShopManagement.API.Services.InvoiceService
                     detail.Product.UpdatedAt = DateTime.UtcNow;
                 }
 
-                // Cập nhật thông tin khách hàng
-                invoice.Customer.TotalPurchaseAmount -= invoice.FinalAmount;
-                invoice.Customer.TotalPurchaseCount -= 1;
-                invoice.Customer.TotalDebt -= (invoice.FinalAmount - invoice.AmountPaid);
-                invoice.Customer.UpdatedAt = DateTime.UtcNow;
+                // Cập nhật thông tin khách hàng (nếu có)
+                if (invoice.Customer != null)
+                {
+                    invoice.Customer.TotalPurchaseAmount -= invoice.FinalAmount;
+                    invoice.Customer.TotalPurchaseCount -= 1;
+                    invoice.Customer.TotalDebt -= (invoice.FinalAmount - invoice.AmountPaid);
+                    invoice.Customer.UpdatedAt = DateTime.UtcNow;
+                }
 
                 // Xóa hóa đơn và chi tiết
                 _context.InvoiceDetails.RemoveRange(invoice.InvoiceDetails);
@@ -521,8 +534,8 @@ namespace YourShopManagement.API.Services.InvoiceService
                     keyword = keyword.Trim().ToLower();
                     query = query.Where(i =>
                         i.InvoiceCode.ToLower().Contains(keyword) ||
-                        i.Customer.CustomerName.ToLower().Contains(keyword) ||
-                        i.Customer.Phone.Contains(keyword) ||
+                        (i.Customer != null && i.Customer.CustomerName.ToLower().Contains(keyword)) ||
+                        (i.Customer != null && i.Customer.Phone != null && i.Customer.Phone.Contains(keyword)) ||
                         (i.Employee != null && i.Employee.EmployeeName.ToLower().Contains(keyword))
                     );
                 }
@@ -533,7 +546,7 @@ namespace YourShopManagement.API.Services.InvoiceService
                     {
                         InvoiceId = i.InvoiceId,
                         InvoiceCode = i.InvoiceCode,
-                        CustomerName = i.Customer.CustomerName,
+                        CustomerName = i.Customer != null ? i.Customer.CustomerName : "Khách lẻ",
                         EmployeeName = i.Employee != null ? i.Employee.EmployeeName : null,
                         InvoiceDate = i.InvoiceDate,
                         TotalAmount = i.TotalAmount,
@@ -564,7 +577,7 @@ namespace YourShopManagement.API.Services.InvoiceService
                     {
                         InvoiceId = i.InvoiceId,
                         InvoiceCode = i.InvoiceCode,
-                        CustomerName = i.Customer.CustomerName,
+                        CustomerName = i.Customer != null ? i.Customer.CustomerName : "Khách lẻ",
                         EmployeeName = i.Employee != null ? i.Employee.EmployeeName : null,
                         InvoiceDate = i.InvoiceDate,
                         TotalAmount = i.TotalAmount,
@@ -595,7 +608,7 @@ namespace YourShopManagement.API.Services.InvoiceService
                     {
                         InvoiceId = i.InvoiceId,
                         InvoiceCode = i.InvoiceCode,
-                        CustomerName = i.Customer.CustomerName,
+                        CustomerName = i.Customer != null ? i.Customer.CustomerName : "Khách lẻ",
                         EmployeeName = i.Employee != null ? i.Employee.EmployeeName : null,
                         InvoiceDate = i.InvoiceDate,
                         TotalAmount = i.TotalAmount,
@@ -618,6 +631,7 @@ namespace YourShopManagement.API.Services.InvoiceService
                 .Include(i => i.Customer)
                 .Include(i => i.Employee)
                 .Include(i => i.PaymentMethod)
+                .Include(i => i.Shop)
                 .Include(i => i.InvoiceDetails)
                     .ThenInclude(d => d.Product)
                 .FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);

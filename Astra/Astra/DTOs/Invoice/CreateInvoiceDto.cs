@@ -13,10 +13,18 @@ namespace YourShopManagement.API.DTOs.Invoice
         [MaxLength(50, ErrorMessage = "Mã hóa đơn không được vượt quá 50 ký tự")]
         public string InvoiceCode { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Khách hàng không được để trống")]
-        public int CustomerId { get; set; }
+        public int? ShopId { get; set; }
 
-        public int? EmployeeId { get; set; }
+        /// <summary>
+        /// Mã khách hàng - Nullable (cho phép bán lẻ không lưu thông tin khách)
+        /// </summary>
+        public int? CustomerId { get; set; }
+
+        /// <summary>
+        /// Mã nhân viên - BẮT BUỘC (phải biết ai bán hàng)
+        /// </summary>
+        [Required(ErrorMessage = "Nhân viên không được để trống")]
+        public int EmployeeId { get; set; }
 
         [Required(ErrorMessage = "Ngày lập hóa đơn không được để trống")]
         public DateTime InvoiceDate { get; set; } = DateTime.UtcNow;
@@ -28,6 +36,11 @@ namespace YourShopManagement.API.DTOs.Invoice
         public decimal AmountPaid { get; set; } = 0;
 
         public int? PaymentMethodId { get; set; }
+
+        /// <summary>
+        /// Mã khuyến mãi áp dụng (nếu có)
+        /// </summary>
+        public int? PromotionId { get; set; }
 
         [MaxLength(500, ErrorMessage = "Ghi chú không được vượt quá 500 ký tự")]
         public string? Notes { get; set; }

@@ -8,7 +8,7 @@
         public string? Description { get; set; }
         public int? CategoryId { get; set; }
         public string? Brand { get; set; }
-        public int? SupplierId { get; set; }
+        public string? SupplierName { get; set; }
         public decimal Price { get; set; }
         public decimal? CostPrice { get; set; }
         public int Stock { get; set; }
@@ -32,7 +32,7 @@
         public string? Description { get; set; }
         public int? CategoryId { get; set; }
         public string? Brand { get; set; }
-        public int? SupplierId { get; set; }
+        public string? SupplierName { get; set; }
         public decimal Price { get; set; }
         public decimal? CostPrice { get; set; }
         public int Stock { get; set; } = 0;
@@ -41,6 +41,28 @@
         public string? Barcode { get; set; }
         public string? Unit { get; set; }
         public string? ImageUrl { get; set; }
+        public string? Notes { get; set; }
+        public decimal? Weight { get; set; }
+        public string? Dimension { get; set; }
+    }
+
+    public class ProductUpdateDto
+    {
+        public string? ProductCode { get; set; }
+        public string? ProductName { get; set; }
+        public string? Description { get; set; }
+        public int? CategoryId { get; set; }
+        public string? Brand { get; set; }
+        public string? SupplierName { get; set; }
+        public decimal? Price { get; set; }
+        public decimal? CostPrice { get; set; }
+        public int? Stock { get; set; }
+        public int? MinStock { get; set; }
+        public string? Sku { get; set; }
+        public string? Barcode { get; set; }
+        public string? Unit { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? Status { get; set; } // active/inactive
         public string? Notes { get; set; }
         public decimal? Weight { get; set; }
         public string? Dimension { get; set; }

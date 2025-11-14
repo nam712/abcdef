@@ -35,6 +35,7 @@ namespace YourShopManagement.API.Repositories
         /// </summary>
         public async Task<Supplier?> GetByIdAsync(int supplierId)
         {
+            // 🔒 Auto-filter by shop_owner_id from DbContext
             return await _context.Suppliers
                 .FirstOrDefaultAsync(s => s.SupplierId == supplierId);
         }
@@ -44,6 +45,7 @@ namespace YourShopManagement.API.Repositories
         /// </summary>
         public async Task<Supplier?> GetByCodeAsync(string supplierCode)
         {
+            // 🔒 Auto-filter by shop_owner_id from DbContext
             return await _context.Suppliers
                 .FirstOrDefaultAsync(s => s.SupplierCode == supplierCode);
         }
@@ -53,6 +55,7 @@ namespace YourShopManagement.API.Repositories
         /// </summary>
         public async Task<Supplier> CreateAsync(Supplier supplier)
         {
+            // shop_owner_id will be set in service layer
             _context.Suppliers.Add(supplier);
             await _context.SaveChangesAsync();
             return supplier;
@@ -103,7 +106,7 @@ namespace YourShopManagement.API.Repositories
 
             if (!string.IsNullOrEmpty(contactPerson))
             {
-                query = query.Where(s => s.ContactName != null && s.ContactName.Contains(contactPerson));
+                query = query.Where(s => s.ContactPerson != null && s.ContactPerson.Contains(contactPerson));
             }
 
             var totalCount = await query.CountAsync();
@@ -118,11 +121,14 @@ namespace YourShopManagement.API.Repositories
         }
 
         /// <summary>
-        /// Kiểm tra nhà cung cấp có sản phẩm không
+        /// Kiểm tra nhà cung cấp có sản phẩm không (kiểm tra theo tên)
         /// </summary>
         public async Task<bool> HasProductsAsync(int supplierId)
         {
-            return await _context.Products.AnyAsync(p => p.SupplierId == supplierId);
+            var supplier = await _context.Suppliers.FindAsync(supplierId);
+            if (supplier == null) return false;
+            
+            return await _context.Products.AnyAsync(p => p.SupplierName != null && p.SupplierName == supplier.SupplierName);
         }
 
         /// <summary>
@@ -141,8 +147,15 @@ namespace YourShopManagement.API.Repositories
             var total = await _context.Suppliers.CountAsync();
             var active = await _context.Suppliers.CountAsync(s => s.Status == "active");
             var inactive = await _context.Suppliers.CountAsync(s => s.Status == "inactive");
-            var withProducts = await _context.Suppliers
-                .CountAsync(s => s.Products != null && s.Products.Any());
+            
+            // Đếm suppliers có products (kiểm tra theo tên trong bảng products)
+            var supplierNames = await _context.Suppliers.Select(s => s.SupplierName).ToListAsync();
+            var withProducts = await _context.Products
+                .Where(p => p.SupplierName != null && supplierNames.Contains(p.SupplierName))
+                .Select(p => p.SupplierName)
+                .Distinct()
+                .CountAsync();
+            
             var withOrders = await _context.Suppliers
                 .CountAsync(s => s.PurchaseOrders != null && s.PurchaseOrders.Any());
 

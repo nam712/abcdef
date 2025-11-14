@@ -13,6 +13,6 @@ namespace YourShopManagement.API.Repositories
         Task DeleteAsync(int id);
         Task<IEnumerable<Product>> SearchAsync(string keyword);
         Task<IEnumerable<Product>> GetByCategoryAsync(int categoryId);
-        Task<IEnumerable<Product>> GetBySupplierAsync(int supplierId);
+        Task<IEnumerable<Product>> GetBySupplierAsync(string supplierName);
     }
 }

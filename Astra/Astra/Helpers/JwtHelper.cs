@@ -39,8 +39,7 @@ namespace YourShopManagement.API.Helpers
                 new Claim(ClaimTypes.Role, "ShopOwner"),
                 new Claim("user_type", "ShopOwner"),
                 new Claim("phone", shopOwner.Phone),
-                new Claim("shop_owner_id", shopOwner.ShopOwnerId.ToString()),
-                new Claim("shop_name", shopOwner.ShopName ?? "")
+                new Claim("shop_owner_id", shopOwner.ShopOwnerId.ToString())
             };
 
             var token = new JwtSecurityToken(
@@ -81,7 +80,6 @@ namespace YourShopManagement.API.Helpers
                 new Claim("phone", employee.Phone ?? ""),
                 new Claim("employee_id", employee.EmployeeId.ToString()), // ✅ THÊM CLAIM RIÊNG
                 new Claim("employee_code", employee.EmployeeCode ?? ""),
-                new Claim("shop_owner_id", employee.ShopOwnerId.ToString()),
                 new Claim("position", employee.Position ?? ""),
                 new Claim("department", employee.Department ?? ""),
                 new Claim("permissions", employee.Permissions ?? "")
@@ -102,7 +100,6 @@ namespace YourShopManagement.API.Helpers
             Console.WriteLine($"  - sub (EmployeeId): {employee.EmployeeId}");
             Console.WriteLine($"  - name: {employee.EmployeeName}");
             Console.WriteLine($"  - employee_code: {employee.EmployeeCode}");
-            Console.WriteLine($"  - shop_owner_id: {employee.ShopOwnerId}");
             
             return tokenString;
         }

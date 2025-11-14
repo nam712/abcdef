@@ -16,7 +16,7 @@ namespace YourShopManagement.API.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int CustomerId { get; set; }
 
-        // ✅ THÊM KHÓA NGOẠI LIÊN KẾT VỚI SHOP OWNER
+        // 🔒 Multi-tenancy: Mỗi customer thuộc về 1 shop owner
         [Required]
         [Column("shop_owner_id")]
         public int ShopOwnerId { get; set; }
@@ -110,10 +110,6 @@ namespace YourShopManagement.API.Models
         [Required]
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-        // ✅ NAVIGATION PROPERTY LIÊN KẾT VỚI SHOP OWNER
-        [ForeignKey("ShopOwnerId")]
-        public virtual ShopOwner ShopOwner { get; set; } = null!;
 
         // Navigation Properties
         public virtual ICollection<Invoice>? Invoices { get; set; }

@@ -30,18 +30,6 @@ namespace YourShopManagement.API.DTOs.Auth
         [MaxLength(50)]
         public string? TaxCode { get; set; }
 
-        public int? BusinessCategoryId { get; set; }
-
-        [Required(ErrorMessage = "Tên cửa hàng không được để trống")]
-        [MaxLength(255)]
-        public string ShopName { get; set; } = string.Empty;
-
-        [MaxLength(255)]
-        public string? ShopAddress { get; set; }
-
-        [MaxLength(255)]
-        public string? ShopDescription { get; set; }
-
         [Required(ErrorMessage = "Mật khẩu không được để trống")]
         [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
         [MaxLength(255)]
@@ -85,12 +73,8 @@ namespace YourShopManagement.API.DTOs.Auth
         public string ShopOwnerName { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public string? Email { get; set; }
-        public string ShopName { get; set; } = string.Empty;
-        public string? ShopLogoUrl { get; set; }
         public string? AvatarUrl { get; set; }
         public string Status { get; set; } = string.Empty;
-        public int? BusinessCategoryId { get; set; }
-        public string? BusinessCategoryName { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 

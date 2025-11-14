@@ -5,7 +5,7 @@ using YourShopManagement.API.Models; // để truy cập ShopOwner
 
 namespace Backend.Models
 {
-    [Table("momo_infos")]
+    [Table("momoinfos")]
     public class MomoInfo
     {
         [Key]
@@ -36,17 +36,8 @@ namespace Backend.Models
         [Column("payment_method_id")]
         public int PaymentMethodId { get; set; }
 
-        // ✅ Thêm chủ shop (bắt buộc)
-        [Required]
-        [Column("shop_owner_id")]
-        public int ShopOwnerId { get; set; }
-
-        // ✅ Navigation property đến PaymentMethod
+        // Navigation property đến PaymentMethod
         [ForeignKey("PaymentMethodId")]
         public virtual PaymentMethod PaymentMethod { get; set; } = null!;
-
-        // ✅ Navigation property đến ShopOwner
-        [ForeignKey("ShopOwnerId")]
-        public virtual ShopOwner ShopOwner { get; set; } = null!;
     }
 }

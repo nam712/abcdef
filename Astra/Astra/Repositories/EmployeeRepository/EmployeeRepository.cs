@@ -22,6 +22,7 @@ namespace Backend.Repositories
 
         public async Task<Employee> GetByIdAsync(int employeeId)
         {
+            // 🔒 Auto-filter by shop_owner_id from DbContext
             return await _context.Employees.FindAsync(employeeId);
         }
 
@@ -31,6 +32,7 @@ namespace Backend.Repositories
             
             try
             {
+                // 🔒 Auto-filter by shop_owner_id from ApplicationDbContext
                 var employees = await _context.Employees.ToListAsync();
                 Console.WriteLine($"🔍 [DEBUG] Found {employees.Count} employees in database");
                 
@@ -67,7 +69,7 @@ namespace Backend.Repositories
                     Console.WriteLine("🔍 [DEBUG] Sample employees (without filter):");
                     foreach (var emp in employees.Take(5))
                     {
-                        Console.WriteLine($"  - ID: {emp.EmployeeId}, Name: {emp.EmployeeName}, Username: {emp.Username}, ShopOwnerId: {emp.ShopOwnerId}");
+                        Console.WriteLine($"  - ID: {emp.EmployeeId}, Name: {emp.EmployeeName}, Username: {emp.Username}");
                     }
                 }
                 
@@ -82,6 +84,7 @@ namespace Backend.Repositories
 
         public async Task<Employee> AddAsync(Employee employee)
         {
+            // shop_owner_id will be set in service layer
             _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
             return employee;
@@ -137,7 +140,6 @@ namespace Backend.Repositories
             try
             {
                 var employee = await _context.Employees
-                    .Include(e => e.ShopOwner)
                     .FirstOrDefaultAsync(e => e.Username == username);
                     
                 Console.WriteLine($"🔍 [DEBUG] Employee found: {employee != null}");
@@ -165,14 +167,13 @@ namespace Backend.Repositories
             {
                 var employee = await _context.Employees
                     .IgnoreQueryFilters()
-                    .Include(e => e.ShopOwner)
                     .FirstOrDefaultAsync(e => e.Username == username);
                     
                 Console.WriteLine($"🔍 [DEBUG] Employee found (without filter): {employee != null}");
                 
                 if (employee != null)
                 {
-                    Console.WriteLine($"🔍 [DEBUG] Employee details: ID={employee.EmployeeId}, Name={employee.EmployeeName}, ShopOwnerId={employee.ShopOwnerId}");
+                    Console.WriteLine($"🔍 [DEBUG] Employee details: ID={employee.EmployeeId}, Name={employee.EmployeeName}");
                 }
                 
                 return employee;

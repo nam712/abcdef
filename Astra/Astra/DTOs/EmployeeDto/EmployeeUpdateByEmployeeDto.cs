@@ -14,7 +14,6 @@ namespace Backend.DTOs
         public int EmployeeId { get; set; }
 
         // ❌ CHỈ HIỂN THỊ - KHÔNG ĐƯỢC SỬA
-        public int ShopOwnerId { get; set; }
         public string? EmployeeCode { get; set; }
         public string? EmployeeName { get; set; }
         public string? Position { get; set; }

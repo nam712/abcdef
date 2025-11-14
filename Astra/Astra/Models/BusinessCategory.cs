@@ -22,6 +22,6 @@ namespace YourShopManagement.API.Models
         public string CategoryName { get; set; } = string.Empty;
 
         // Navigation Properties
-        public virtual ICollection<ShopOwner>? ShopOwners { get; set; }
+        public virtual ICollection<Shop>? Shops { get; set; }
     }
 }

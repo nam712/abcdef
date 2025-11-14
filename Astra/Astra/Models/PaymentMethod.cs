@@ -15,11 +15,6 @@ namespace Backend.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int PaymentMethodId { get; set; }
 
-        // ✅ BẮT BUỘC THUỘC VỀ MỘT SHOP OWNER (NOT NULL)
-        [Required]
-        [Column("shop_owner_id")]
-        public int ShopOwnerId { get; set; }
-
         [Required]
         [Column("method_name")]
         [MaxLength(100)]
@@ -45,11 +40,10 @@ namespace Backend.Models
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // ✅ NAVIGATION PROPERTY LIÊN KẾT CHỦ SHOP
-        [ForeignKey("ShopOwnerId")]
-        public virtual ShopOwner ShopOwner { get; set; } = null!;
-
         // Navigation property tới hóa đơn
         public virtual ICollection<Invoice>? Invoices { get; set; }
+        
+        // Navigation property tới MomoInfo
+        public virtual ICollection<MomoInfo>? MomoInfos { get; set; }
     }
 }

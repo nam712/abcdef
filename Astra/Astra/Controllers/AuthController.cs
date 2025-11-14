@@ -51,9 +51,6 @@ namespace YourShopManagement.API.Controllers
             Console.WriteLine($"Phone: {dto.Phone}");
             Console.WriteLine($"Email: {dto.Email}");
             Console.WriteLine($"Gender: {dto.Gender}");
-            Console.WriteLine($"BusinessCategoryId: {dto.BusinessCategoryId}");
-            Console.WriteLine($"ShopName: {dto.ShopName}");
-            Console.WriteLine($"ShopAddress: {dto.ShopAddress}");
             Console.WriteLine($"TermsAgreed: {dto.TermsAndConditionsAgreed}");
             Console.WriteLine("========================================");
 
@@ -152,7 +149,7 @@ namespace YourShopManagement.API.Controllers
             
             if (result.Data?.UserType == "ShopOwner")
             {
-                Console.WriteLine($"👑 ShopOwner: {result.Data.ShopOwner?.ShopOwnerName} - {result.Data.ShopOwner?.ShopName}");
+                Console.WriteLine($"👑 ShopOwner: {result.Data.ShopOwner?.ShopOwnerName}");
             }
             else if (result.Data?.UserType == "Employee")
             {

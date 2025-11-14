@@ -22,16 +22,20 @@ namespace YourShopManagement.API.Repositories
 
         public async Task<Customer> GetByIdAsync(int customerId)
         {
-            return await _context.Customers.FindAsync(customerId);
+            // 🔒 Filter by current shop owner
+            return await _context.Customers
+                .FirstOrDefaultAsync(c => c.CustomerId == customerId);
         }
 
         public async Task<IEnumerable<Customer>> GetAllAsync()
         {
+            // 🔒 Auto-filter by shop_owner_id from DbContext
             return await _context.Customers.ToListAsync();
         }
 
         public async Task<Customer> AddAsync(Customer customer)
         {
+            // shop_owner_id will be set automatically in service layer
             _context.Customers.Add(customer);
             await _context.SaveChangesAsync();
             return customer;

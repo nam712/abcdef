@@ -7,6 +7,8 @@ using YourShopManagement.API.DTOs.Auth;
 using YourShopManagement.API.Models;
 using YourShopManagement.API.Repositories;
 using YourShopManagement.API.DTOs.Common;
+using YourShopManagement.API.Data;
+using Microsoft.AspNetCore.Http;
 
 namespace YourShopManagement.API.Services
 {
@@ -16,11 +18,21 @@ namespace YourShopManagement.API.Services
     {
         private readonly ICustomerRepository _repository;
         private readonly IMapper _mapper;
+        private readonly ApplicationDbContext _context;
+        private readonly int _currentShopOwnerId;
 
-        public CustomerService(ICustomerRepository repository, IMapper mapper)
+        public CustomerService(ICustomerRepository repository, IMapper mapper, ApplicationDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _repository = repository;
             _mapper = mapper;
+            _context = context;
+            
+            // 🔒 Lấy shop_owner_id từ JWT token
+            var claim = httpContextAccessor.HttpContext?.User?.FindFirst("shop_owner_id")?.Value;
+            if (int.TryParse(claim, out var id))
+                _currentShopOwnerId = id;
+            else
+                _currentShopOwnerId = 0;
         }
 
         public async Task<CustomerDto?> GetByIdAsync(int customerId)
@@ -38,6 +50,8 @@ namespace YourShopManagement.API.Services
         public async Task<CustomerDto> AddAsync(CustomerDto customerDto)
         {
             var customer = _mapper.Map<Customer>(customerDto);
+            // 🔒 Set shop_owner_id from current user
+            customer.ShopOwnerId = _currentShopOwnerId;
             var added = await _repository.AddAsync(customer);
             return _mapper.Map<CustomerDto>(added);
         }

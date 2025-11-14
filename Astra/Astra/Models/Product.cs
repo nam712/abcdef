@@ -16,6 +16,11 @@ namespace YourShopManagement.API.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ProductId { get; set; }
 
+        // 🔒 Multi-tenancy: Sản phẩm thuộc shop_owner nào
+        [Required]
+        [Column("shop_owner_id")]
+        public int ShopOwnerId { get; set; }
+
         [Required(ErrorMessage = "Mã sản phẩm không được để trống")]
         [MaxLength(50)]
         [Column("product_code")]
@@ -37,8 +42,9 @@ namespace YourShopManagement.API.Models
         [Column("brand")]
         public string? Brand { get; set; }
 
-        [Column("supplier_id")]
-        public int? SupplierId { get; set; }
+        [MaxLength(255)]
+        [Column("supplier_name")]
+        public string? SupplierName { get; set; }
 
         [Required]
         [Column("price", TypeName = "decimal(18,2)")]
@@ -93,24 +99,11 @@ namespace YourShopManagement.API.Models
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // 🔹 Thêm cột khóa ngoại đến chủ shop
-        [Required]
-        [Column("shop_owner_id")]
-        public int ShopOwnerId { get; set; }
-
-        // 🔹 Navigation Property
-        [ForeignKey("ShopOwnerId")]
-        public virtual ShopOwner ShopOwner { get; set; } = null!;
-
-        // Navigation Properties khác
-        [ForeignKey("SupplierId")]
-        public virtual Supplier? Supplier { get; set; }
-
+        // Navigation Properties (không có FK đến ShopOwner)
         [ForeignKey("CategoryId")]
         public virtual ProductCategory? Category { get; set; }
 
         public virtual ICollection<PurchaseOrderDetail>? PurchaseOrderDetails { get; set; }
         public virtual ICollection<InvoiceDetail>? InvoiceDetails { get; set; }
-        public virtual ICollection<PriceHistory>? PriceHistories { get; set; }
     }
 }

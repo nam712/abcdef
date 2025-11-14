@@ -8,10 +8,16 @@ namespace YourShopManagement.API.DTOs.Invoice
     /// </summary>
     public class UpdateInvoiceDto
     {
-        [Required(ErrorMessage = "Khách hàng không được để trống")]
-        public int CustomerId { get; set; }
+        /// <summary>
+        /// Mã khách hàng - Nullable (cho phép bán lẻ)
+        /// </summary>
+        public int? CustomerId { get; set; }
 
-        public int? EmployeeId { get; set; }
+        /// <summary>
+        /// Mã nhân viên - BẮT BUỘC
+        /// </summary>
+        [Required(ErrorMessage = "Nhân viên không được để trống")]
+        public int EmployeeId { get; set; }
 
         [Required(ErrorMessage = "Ngày lập hóa đơn không được để trống")]
         public DateTime InvoiceDate { get; set; }

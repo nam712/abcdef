@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using YourShopManagement.API.DTOs.PurchaseOrder;
 using YourShopManagement.API.Services;
 using YourShopManagement.API.Services.Interfaces;
@@ -44,6 +44,17 @@ namespace YourShopManagement.API.Controllers
             var (success, msg) = await _service.DeleteAsync(id);
             if (!success) return NotFound(new { success, msg });
             return Ok(new { success, msg });
+        }
+
+        /// <summary>
+        /// ⭐ XÁC NHẬN NHẬP HÀNG: Tăng stock và active sản phẩm
+        /// </summary>
+        [HttpPut("{id}/confirm")]
+        public async Task<IActionResult> ConfirmPurchaseOrder(int id)
+        {
+            var (success, msg) = await _service.ConfirmPurchaseOrderAsync(id);
+            if (!success) return BadRequest(new { success, message = msg });
+            return Ok(new { success, message = msg });
         }
     }
 }

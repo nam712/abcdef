@@ -16,7 +16,7 @@ namespace YourShopManagement.API.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int SupplierId { get; set; }
 
-        // ✅ THÊM PROPERTY NÀY (Liên kết đến chủ shop)
+        // 🔒 Multi-tenancy: Mỗi supplier thuộc về 1 shop owner
         [Required]
         [Column("shop_owner_id")]
         public int ShopOwnerId { get; set; }
@@ -32,8 +32,8 @@ namespace YourShopManagement.API.Models
         public string SupplierName { get; set; } = string.Empty;
 
         [MaxLength(255)]
-        [Column("contact_name")]
-        public string? ContactName { get; set; }
+        [Column("contact_person")]
+        public string? ContactPerson { get; set; }
 
         [MaxLength(20)]
         [Column("phone")]
@@ -83,12 +83,8 @@ namespace YourShopManagement.API.Models
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // ✅ THÊM NAVIGATION PROPERTY (liên kết đến chủ shop)
-        [ForeignKey("ShopOwnerId")]
-        public virtual ShopOwner ShopOwner { get; set; } = null!;
-
         // Navigation Properties
-        public virtual ICollection<Product>? Products { get; set; }
         public virtual ICollection<PurchaseOrder>? PurchaseOrders { get; set; }
+        // ❌ REMOVED: Products navigation - Product không có FK đến Supplier (chỉ có supplier_name VARCHAR)
     }
 }

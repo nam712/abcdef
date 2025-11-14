@@ -11,18 +11,25 @@ namespace YourShopManagement.API.DTOs.Invoice
         public int InvoiceId { get; set; }
         public string InvoiceCode { get; set; } = string.Empty;
         
-        // Customer Info
-        public int CustomerId { get; set; }
+        // Shop Info
+        public int? ShopId { get; set; }
+        public string? ShopName { get; set; }
+        
+        // Customer Info (nullable - cho phép khách lẻ)
+        public int? CustomerId { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public string? CustomerPhone { get; set; }
         
-        // Employee Info
-        public int? EmployeeId { get; set; }
+        // Employee Info (bắt buộc)
+        public int EmployeeId { get; set; }
         public string? EmployeeName { get; set; }
         
         // Payment Method Info
         public int? PaymentMethodId { get; set; }
         public string? PaymentMethodName { get; set; }
+        
+        // Promotion Info
+        public List<PromotionSummaryDto>? Promotions { get; set; }
         
         public DateTime InvoiceDate { get; set; }
         public decimal TotalAmount { get; set; }
@@ -67,5 +74,17 @@ namespace YourShopManagement.API.DTOs.Invoice
         public decimal AmountPaid { get; set; }
         public string PaymentStatus { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+    }
+
+    /// <summary>
+    /// DTO tóm tắt khuyến mãi trong invoice
+    /// </summary>
+    public class PromotionSummaryDto
+    {
+        public int PromotionId { get; set; }
+        public string PromotionCode { get; set; } = string.Empty;
+        public string PromotionName { get; set; } = string.Empty;
+        public string PromotionType { get; set; } = string.Empty;
+        public decimal DiscountValue { get; set; }
     }
 }

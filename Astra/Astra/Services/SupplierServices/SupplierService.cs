@@ -6,6 +6,7 @@ using YourShopManagement.API.Models;
 using YourShopManagement.API.Repositories;
 using YourShopManagement.API.Helpers;
 using YourShopManagement.API.Data;
+using Microsoft.AspNetCore.Http;
 
 namespace YourShopManagement.API.Services
 {
@@ -14,12 +15,20 @@ namespace YourShopManagement.API.Services
     private readonly ISupplierRepository _supplierRepository;
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
+    private readonly int _currentShopOwnerId;
 
-        public SupplierService(ISupplierRepository supplierRepository, IMapper mapper, ApplicationDbContext context)
+        public SupplierService(ISupplierRepository supplierRepository, IMapper mapper, ApplicationDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _supplierRepository = supplierRepository;
             _mapper = mapper;
             _context = context;
+            
+            // 🔒 Lấy shop_owner_id từ JWT token
+            var claim = httpContextAccessor.HttpContext?.User?.FindFirst("shop_owner_id")?.Value;
+            if (int.TryParse(claim, out var id))
+                _currentShopOwnerId = id;
+            else
+                _currentShopOwnerId = 0;
         }
 
         /// <summary>
@@ -29,6 +38,7 @@ namespace YourShopManagement.API.Services
         {
             try
             {
+                // 🔒 Auto-filtered by ApplicationDbContext
                 var (suppliers, totalCount) = await _supplierRepository.GetAllAsync(page, pageSize);
                 var supplierDtos = _mapper.Map<List<SupplierInfoDto>>(suppliers);
 
@@ -72,7 +82,7 @@ namespace YourShopManagement.API.Services
                     SupplierId = supplier.SupplierId,
                     SupplierCode = supplier.SupplierCode,
                     SupplierName = supplier.SupplierName,
-                    ContactPerson = supplier.ContactName,
+                    ContactPerson = supplier.ContactPerson,
                     Phone = supplier.Phone,
                     Email = supplier.Email,
                     Address = supplier.Address,
@@ -119,9 +129,10 @@ namespace YourShopManagement.API.Services
 
                 var supplier = new Supplier
                 {
+                    ShopOwnerId = _currentShopOwnerId, // 🔒 Set từ JWT
                     SupplierCode = dto.SupplierCode,
                     SupplierName = dto.SupplierName,
-                    ContactName = dto.ContactPerson,
+                    ContactPerson = dto.ContactPerson,
                     Phone = dto.Phone,
                     Email = dto.Email,
                     Address = dto.Address,
@@ -144,7 +155,7 @@ namespace YourShopManagement.API.Services
                     SupplierId = supplier.SupplierId,
                     SupplierCode = supplier.SupplierCode,
                     SupplierName = supplier.SupplierName,
-                    ContactPerson = supplier.ContactName,
+                    ContactPerson = supplier.ContactPerson,
                     Phone = supplier.Phone,
                     Email = supplier.Email,
                     Address = supplier.Address,
@@ -200,7 +211,7 @@ namespace YourShopManagement.API.Services
                 // Cập nhật thông tin
                 supplier.SupplierCode = dto.SupplierCode;
                 supplier.SupplierName = dto.SupplierName;
-                supplier.ContactName = dto.ContactPerson;
+                supplier.ContactPerson = dto.ContactPerson;
                 supplier.Phone = dto.Phone;
                 supplier.Email = dto.Email;
                 supplier.Address = dto.Address;
@@ -220,7 +231,7 @@ namespace YourShopManagement.API.Services
                     SupplierId = supplier.SupplierId,
                     SupplierCode = supplier.SupplierCode,
                     SupplierName = supplier.SupplierName,
-                    ContactPerson = supplier.ContactName,
+                    ContactPerson = supplier.ContactPerson,
                     Phone = supplier.Phone,
                     Email = supplier.Email,
                     Address = supplier.Address,
@@ -262,7 +273,7 @@ namespace YourShopManagement.API.Services
                 }
 
                 // Kiểm tra xem nhà cung cấp có sản phẩm hoặc đơn hàng không
-                var hasProducts = await _context.Products.AnyAsync(p => p.SupplierId == supplierId);
+                var hasProducts = await _context.Products.AnyAsync(p => p.SupplierName == supplier.SupplierName);
                 var hasOrders = await _context.PurchaseOrders.AnyAsync(po => po.SupplierId == supplierId);
 
                 if (hasProducts || hasOrders)
@@ -308,7 +319,7 @@ namespace YourShopManagement.API.Services
 
                 if (!string.IsNullOrEmpty(searchDto.ContactPerson))
                 {
-                    query = query.Where(s => s.ContactName != null && s.ContactName.Contains(searchDto.ContactPerson));
+                    query = query.Where(s => s.ContactPerson != null && s.ContactPerson.Contains(searchDto.ContactPerson));
                 }
 
                 var totalCount = await query.CountAsync();
@@ -322,7 +333,7 @@ namespace YourShopManagement.API.Services
                         SupplierId = s.SupplierId,
                         SupplierCode = s.SupplierCode,
                         SupplierName = s.SupplierName,
-                        ContactPerson = s.ContactName,
+                        ContactPerson = s.ContactPerson,
                         Phone = s.Phone,
                         Email = s.Email,
                         Address = s.Address,
@@ -368,8 +379,15 @@ namespace YourShopManagement.API.Services
                 var totalSuppliers = await _context.Suppliers.CountAsync();
                 var activeSuppliers = await _context.Suppliers.CountAsync(s => s.Status == "active");
                 var inactiveSuppliers = await _context.Suppliers.CountAsync(s => s.Status == "inactive");
-                var suppliersWithProducts = await _context.Suppliers
-                    .CountAsync(s => s.Products != null && s.Products.Any());
+                
+                // ❌ KHÔNG thể dùng s.Products.Any() vì không còn navigation property
+                // ✅ Đếm products có supplier_name trùng với supplier
+                var suppliersWithProducts = await (
+                    from s in _context.Suppliers
+                    join p in _context.Products on s.SupplierName equals p.SupplierName
+                    select s.SupplierId
+                ).Distinct().CountAsync();
+                
                 var suppliersWithOrders = await _context.Suppliers
                     .CountAsync(s => s.PurchaseOrders != null && s.PurchaseOrders.Any());
 

@@ -64,7 +64,7 @@ namespace YourShopManagement.API.Repositories
         {
             return await _context.ProductCategories
                 .Where(c => c.CategoryName.Contains(keyword) ||
-                            c.Description!.Contains(keyword))
+                            (c.Description != null && c.Description.Contains(keyword)))
                 .ToListAsync();
         }
     }

@@ -23,22 +23,22 @@ namespace YourShopManagement.API.Data
                 _currentShopOwnerId = 0; // Default value
         }
 
-        // ==================== DbSets cho 13 bảng ====================
+        // ==================== DbSets cho 15 bảng ====================
         public DbSet<BusinessCategory> BusinessCategories { get; set; }
         public DbSet<ShopOwner> ShopOwners { get; set; }
+        public DbSet<Shop> Shops { get; set; }
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<ProductCategory> ProductCategories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
         public DbSet<PurchaseOrderDetail> PurchaseOrderDetails { get; set; }
-        public DbSet<PriceHistory> PriceHistories { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceDetail> InvoiceDetails { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Employee> Employees { get; set; }
         public DbSet<PaymentMethod> PaymentMethods { get; set; }
         public DbSet<MomoInfo> MomoInfos { get; set; }
-        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Promotion> Promotions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -65,7 +65,6 @@ namespace YourShopManagement.API.Data
 
                 entity.Property(e => e.ShopOwnerName).IsRequired().HasMaxLength(255);
                 entity.Property(e => e.Phone).IsRequired().HasMaxLength(20);
-                entity.Property(e => e.ShopName).IsRequired().HasMaxLength(255);
                 entity.Property(e => e.Password).IsRequired().HasMaxLength(255);
                 entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue("active");
                 entity.Property(e => e.TermsAndConditionsAgreed).IsRequired().HasDefaultValue(false);
@@ -76,11 +75,38 @@ namespace YourShopManagement.API.Data
                 entity.HasIndex(e => e.Phone).IsUnique();
                 entity.HasIndex(e => e.Email);
                 entity.HasIndex(e => e.Status);
+            });
+
+            // ==================== 2.5. SHOP ====================
+            modelBuilder.Entity<Shop>(entity =>
+            {
+                entity.HasKey(e => e.ShopId);
+
+                entity.Property(e => e.ShopCode).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.ShopName).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.ShopAddress).HasMaxLength(255);
+                entity.Property(e => e.ShopPhone).HasMaxLength(20);
+                entity.Property(e => e.ShopEmail).HasMaxLength(100);
+                entity.Property(e => e.ManagerName).HasMaxLength(255);
+                entity.Property(e => e.ManagerPhone).HasMaxLength(20);
+                entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue("active");
+                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+                entity.Property(e => e.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Indexes
+                entity.HasIndex(e => e.ShopOwnerId);
+                entity.HasIndex(e => e.ShopCode);
+                entity.HasIndex(e => e.Status);
                 entity.HasIndex(e => e.BusinessCategoryId);
 
                 // Relationships
+                entity.HasOne(e => e.ShopOwner)
+                    .WithMany(so => so.Shops)
+                    .HasForeignKey(e => e.ShopOwnerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
                 entity.HasOne(e => e.BusinessCategory)
-                    .WithMany(c => c.ShopOwners)
+                    .WithMany(bc => bc.Shops)
                     .HasForeignKey(e => e.BusinessCategoryId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
@@ -92,21 +118,25 @@ namespace YourShopManagement.API.Data
 
                 b.HasKey(x => x.SupplierId);
                 b.Property(x => x.SupplierId).HasColumnName("supplier_id");
+                b.Property(x => x.ShopOwnerId).HasColumnName("shop_owner_id").IsRequired();
                 b.Property(x => x.SupplierCode).HasColumnName("supplier_code").IsRequired().HasMaxLength(50);
                 b.Property(x => x.SupplierName).HasColumnName("supplier_name").IsRequired().HasMaxLength(255);
                 b.Property(x => x.Address).HasColumnName("address");
                 b.Property(x => x.Phone).HasColumnName("phone").HasMaxLength(20);
                 b.Property(x => x.Email).HasColumnName("email").HasMaxLength(100);
                 b.Property(x => x.TaxCode).HasColumnName("tax_code").HasMaxLength(50);
-                b.Property(x => x.ContactName).HasColumnName("contact_person").HasMaxLength(100);
+                b.Property(x => x.ContactPerson).HasColumnName("contact_person").HasMaxLength(100);
                 b.Property(x => x.BankAccount).HasColumnName("bank_account").HasMaxLength(50);
                 b.Property(x => x.BankName).HasColumnName("bank_name").HasMaxLength(100);
                 b.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).HasDefaultValue("active");
                 b.Property(x => x.Notes).HasColumnName("notes");
                 b.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
                 b.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Indexes
+                b.HasIndex(x => x.ShopOwnerId);
+                b.HasIndex(x => new { x.SupplierCode, x.ShopOwnerId }).IsUnique();
             });
-            modelBuilder.Entity<Supplier>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
 
             // ========================= PRODUCT CATEGORIES =========================
             modelBuilder.Entity<ProductCategory>(b =>
@@ -128,7 +158,6 @@ namespace YourShopManagement.API.Data
                  .HasForeignKey(x => x.ParentCategoryId)
                  .OnDelete(DeleteBehavior.SetNull);
             });
-            modelBuilder.Entity<ProductCategory>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
 
             // ========================= PRODUCTS =========================
             modelBuilder.Entity<Product>(b =>
@@ -137,12 +166,13 @@ namespace YourShopManagement.API.Data
 
                 b.HasKey(x => x.ProductId);
                 b.Property(x => x.ProductId).HasColumnName("product_id");
+                b.Property(x => x.ShopOwnerId).HasColumnName("shop_owner_id").IsRequired();
                 b.Property(x => x.ProductCode).HasColumnName("product_code").IsRequired().HasMaxLength(50);
                 b.Property(x => x.ProductName).HasColumnName("product_name").IsRequired().HasMaxLength(255);
                 b.Property(x => x.Description).HasColumnName("description");
                 b.Property(x => x.CategoryId).HasColumnName("category_id");
                 b.Property(x => x.Brand).HasColumnName("brand").HasMaxLength(100);
-                b.Property(x => x.SupplierId).HasColumnName("supplier_id");
+                b.Property(x => x.SupplierName).HasColumnName("supplier_name").HasMaxLength(255);
                 b.Property(x => x.Price).HasColumnName("price").HasPrecision(18, 2);
                 b.Property(x => x.CostPrice).HasColumnName("cost_price").HasPrecision(18, 2);
                 b.Property(x => x.Stock).HasColumnName("stock");
@@ -158,45 +188,50 @@ namespace YourShopManagement.API.Data
                 b.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
                 b.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                b.HasOne(x => x.Supplier)
-                 .WithMany(s => s.Products)
-                 .HasForeignKey(x => x.SupplierId)
-                 .OnDelete(DeleteBehavior.SetNull);
+                // Indexes
+                b.HasIndex(x => x.ShopOwnerId);
+                b.HasIndex(x => new { x.ProductCode, x.ShopOwnerId }).IsUnique();
 
+                // Relationships (không cần FK đến ShopOwner)
                 b.HasOne(x => x.Category)
                  .WithMany(c => c.Products)
                  .HasForeignKey(x => x.CategoryId)
                  .OnDelete(DeleteBehavior.SetNull);
             });
-            modelBuilder.Entity<Product>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
+
             // ==================== 6. PURCHASE ORDER ====================
             modelBuilder.Entity<PurchaseOrder>(entity =>
             {
                 entity.HasKey(e => e.PurchaseOrderId);
 
-                entity.Property(e => e.PoCode).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.SupplierId).IsRequired();
-                entity.Property(e => e.PoDate).IsRequired();
-                entity.Property(e => e.TotalAmount).HasColumnType("decimal(18,2)").HasDefaultValue(0);
-                entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue("pending");
-                entity.Property(e => e.PaymentStatus).HasMaxLength(20).HasDefaultValue("unpaid");
-                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-                entity.Property(e => e.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+                entity.Property(e => e.ShopOwnerId).HasColumnName("shop_owner_id").IsRequired();
+                entity.Property(e => e.PoCode).HasColumnName("po_code").IsRequired().HasMaxLength(50);
+                entity.Property(e => e.SupplierId).HasColumnName("supplier_id").IsRequired();
+                entity.Property(e => e.PoDate).HasColumnName("po_date").IsRequired();
+                entity.Property(e => e.ExpectedDeliveryDate).HasColumnName("expected_delivery_date");
+                entity.Property(e => e.ActualDeliveryDate).HasColumnName("actual_delivery_date");
+                entity.Property(e => e.TotalAmount).HasColumnName("total_amount").HasColumnType("decimal(18,2)").HasDefaultValue(0);
+                entity.Property(e => e.Status).HasColumnName("status").IsRequired().HasMaxLength(20).HasDefaultValue("pending");
+                entity.Property(e => e.PaymentStatus).HasColumnName("payment_status").HasMaxLength(20).HasDefaultValue("unpaid");
+                entity.Property(e => e.Notes).HasColumnName("notes");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                 // Indexes
-                entity.HasIndex(e => e.PoCode).IsUnique();
+                entity.HasIndex(e => e.ShopOwnerId);
+                entity.HasIndex(e => new { e.PoCode, e.ShopOwnerId }).IsUnique();
                 entity.HasIndex(e => e.SupplierId);
                 entity.HasIndex(e => e.Status);
                 entity.HasIndex(e => e.PaymentStatus);
                 entity.HasIndex(e => e.PoDate);
 
-                // Relationships
+                // Relationships (không cần FK đến ShopOwner)
                 entity.HasOne(e => e.Supplier)
                     .WithMany(s => s.PurchaseOrders)
                     .HasForeignKey(e => e.SupplierId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
-            modelBuilder.Entity<PurchaseOrder>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
+
             // ==================== 7. PURCHASE ORDER DETAIL ====================
             modelBuilder.Entity<PurchaseOrderDetail>(entity =>
             {
@@ -222,29 +257,6 @@ namespace YourShopManagement.API.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ==================== 8. PRICE HISTORY ====================
-            modelBuilder.Entity<PriceHistory>(entity =>
-            {
-                entity.HasKey(e => e.PriceHistoryId);
-
-                entity.Property(e => e.OldPrice).HasColumnType("decimal(18,2)");
-                entity.Property(e => e.NewPrice).IsRequired().HasColumnType("decimal(18,2)");
-                entity.Property(e => e.EffectiveDate).IsRequired();
-                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-                entity.Property(e => e.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                // Indexes
-                entity.HasIndex(e => e.ProductId);
-                entity.HasIndex(e => e.EffectiveDate);
-
-                // Relationships
-                entity.HasOne(e => e.Product)
-                    .WithMany(p => p.PriceHistories)
-                    .HasForeignKey(e => e.ProductId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-            modelBuilder.Entity<PriceHistory>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
-
             // ==================== 9. PAYMENT METHOD ====================
             modelBuilder.Entity<PaymentMethod>(entity =>
             {
@@ -261,12 +273,13 @@ namespace YourShopManagement.API.Data
                 entity.HasIndex(e => e.MethodCode).IsUnique();
                 entity.HasIndex(e => e.IsActive);
             });
-            modelBuilder.Entity<PaymentMethod>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
+
             // ==================== 10. CUSTOMER ====================
             modelBuilder.Entity<Customer>(entity =>
             {
                 entity.HasKey(e => e.CustomerId);
 
+                entity.Property(e => e.ShopOwnerId).IsRequired();
                 entity.Property(e => e.CustomerCode).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(255);
                 entity.Property(e => e.CustomerType).IsRequired().HasMaxLength(20).HasDefaultValue("retail");
@@ -279,7 +292,8 @@ namespace YourShopManagement.API.Data
                 entity.Property(e => e.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                 // Indexes
-                entity.HasIndex(e => e.CustomerCode).IsUnique();
+                entity.HasIndex(e => e.ShopOwnerId);
+                entity.HasIndex(e => new { e.CustomerCode, e.ShopOwnerId }).IsUnique();
                 entity.HasIndex(e => e.CustomerName);
                 entity.HasIndex(e => e.Phone);
                 entity.HasIndex(e => e.Email);
@@ -290,12 +304,13 @@ namespace YourShopManagement.API.Data
                 entity.HasIndex(e => e.Segment);
                 entity.HasIndex(e => e.TotalPurchaseAmount);
             });
-            modelBuilder.Entity<Customer>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
+
             // ==================== 11. EMPLOYEE ====================
             modelBuilder.Entity<Employee>(entity =>
             {
                 entity.HasKey(e => e.EmployeeId);
 
+                entity.Property(e => e.ShopOwnerId).IsRequired();
                 entity.Property(e => e.EmployeeCode).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.EmployeeName).IsRequired().HasMaxLength(255);
                 entity.Property(e => e.HireDate).IsRequired();
@@ -305,7 +320,8 @@ namespace YourShopManagement.API.Data
                 entity.Property(e => e.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                 // Indexes
-                entity.HasIndex(e => e.EmployeeCode).IsUnique();
+                entity.HasIndex(e => e.ShopOwnerId);
+                entity.HasIndex(e => new { e.EmployeeCode, e.ShopOwnerId }).IsUnique();
                 entity.HasIndex(e => e.EmployeeName);
                 entity.HasIndex(e => e.Phone);
                 entity.HasIndex(e => e.Email);
@@ -323,7 +339,7 @@ namespace YourShopManagement.API.Data
                     "(username IS NULL) OR (password IS NOT NULL)"
                 ));
             });
-            modelBuilder.Entity<Employee>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
+
             // ==================== 12. INVOICE ====================
             modelBuilder.Entity<Invoice>(entity =>
             {
@@ -352,19 +368,19 @@ namespace YourShopManagement.API.Data
                 entity.HasOne(e => e.Customer)
                     .WithMany(c => c.Invoices)
                     .HasForeignKey(e => e.CustomerId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.SetNull);
 
                 entity.HasOne(e => e.Employee)
                     .WithMany(emp => emp.Invoices)
                     .HasForeignKey(e => e.EmployeeId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(e => e.PaymentMethod)
                     .WithMany(pm => pm.Invoices)
                     .HasForeignKey(e => e.PaymentMethodId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
-            modelBuilder.Entity<Invoice>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
+
             // ==================== 13. INVOICE DETAIL ====================
             modelBuilder.Entity<InvoiceDetail>(entity =>
             {
@@ -393,57 +409,95 @@ namespace YourShopManagement.API.Data
             });
            
             // Cấu hình MomoInfo
-            var dateTimeConverter = new ValueConverter<DateTime?, DateTime?>(
-                v => v.HasValue ? v.Value.ToUniversalTime() : v,
-                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v
-            );
-            
             modelBuilder.Entity<MomoInfo>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.OrderId).IsRequired();
                 entity.Property(e => e.OrderInfo).IsRequired();
                 entity.Property(e => e.PaymentMethodId).IsRequired();
-                entity.Property(e => e.DatePaid)
-                      .HasConversion(dateTimeConverter);
+                entity.Property(e => e.DatePaid).IsRequired();
 
                 entity.HasOne(m => m.PaymentMethod)
                       .WithMany()
                       .HasForeignKey(m => m.PaymentMethodId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
-            modelBuilder.Entity<MomoInfo>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
 
-            // ==================== NOTIFICATION ====================
-            modelBuilder.Entity<Notification>(entity =>
+            // ==================== PROMOTION ====================
+            modelBuilder.Entity<Promotion>(entity =>
             {
-                entity.HasKey(e => e.NotificationId);
+                entity.HasKey(e => e.PromotionId);
 
-                entity.Property(e => e.Message)
+                entity.Property(e => e.PromotionCode)
                     .IsRequired()
-                    .HasMaxLength(500);
+                    .HasMaxLength(50);
 
-                entity.Property(e => e.Type)
+                entity.Property(e => e.PromotionName)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.PromotionType)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.DiscountValue)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.MinPurchaseAmount)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.MaxDiscountAmount)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.Status)
                     .IsRequired()
                     .HasMaxLength(20)
-                    .HasDefaultValue("info");
+                    .HasDefaultValue("active");
 
-                entity.Property(e => e.IsRead)
-                    .HasDefaultValue(false);
+                entity.Property(e => e.UsageCount)
+                    .HasDefaultValue(0);
 
                 entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                    .HasDefaultValueSql("NOW()");
 
-                entity.HasIndex(e => e.CreatedAt)
-                    .HasDatabaseName("IX_Notifications_CreatedAt");
+                entity.Property(e => e.UpdatedAt)
+                    .HasDefaultValueSql("NOW()");
 
-                entity.HasIndex(e => e.IsRead)
-                    .HasDatabaseName("IX_Notifications_IsRead");
+                // Configure JSONB columns for PostgreSQL
+                entity.Property(e => e.ApplicableProducts)
+                    .HasColumnType("jsonb");
 
-                entity.HasIndex(e => e.UserId)
-                    .HasDatabaseName("IX_Notifications_UserId");
+                entity.Property(e => e.ApplicableCustomers)
+                    .HasColumnType("jsonb");
+
+                // Indexes
+                entity.HasIndex(e => e.InvoiceId)
+                    .HasDatabaseName("idx_promotions_invoice_id");
+
+                entity.HasIndex(e => e.ShopOwnerId)
+                    .HasDatabaseName("idx_promotions_shop_owner_id");
+
+                entity.HasIndex(e => e.Status)
+                    .HasDatabaseName("idx_promotions_status");
+
+                entity.HasIndex(e => e.StartDate)
+                    .HasDatabaseName("idx_promotions_start_date");
+
+                entity.HasIndex(e => e.EndDate)
+                    .HasDatabaseName("idx_promotions_end_date");
+
+                // Unique constraint
+                entity.HasIndex(e => new { e.PromotionCode, e.ShopOwnerId })
+                    .IsUnique()
+                    .HasDatabaseName("uq_promotions_code_shopowner");
+
+                // Foreign key to Invoice
+                entity.HasOne(e => e.Invoice)
+                    .WithMany(i => i.Promotions)
+                    .HasForeignKey(e => e.InvoiceId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
-            modelBuilder.Entity<Notification>().HasQueryFilter(e => e.ShopOwnerId == _currentShopOwnerId);
         }
 
         // ==================== Override SaveChanges để tự động cập nhật UpdatedAt ====================
@@ -500,14 +554,17 @@ namespace YourShopManagement.API.Data
                 {
                     if (property.Metadata.ClrType == typeof(DateTime))
                     {
-                        var value = (DateTime)property.CurrentValue;
-                        if (value.Kind == DateTimeKind.Unspecified)
+                        if (property.CurrentValue != null)
                         {
-                            property.CurrentValue = DateTime.SpecifyKind(value, DateTimeKind.Utc);
-                        }
-                        else if (value.Kind == DateTimeKind.Local)
-                        {
-                            property.CurrentValue = value.ToUniversalTime();
+                            var value = (DateTime)property.CurrentValue;
+                            if (value.Kind == DateTimeKind.Unspecified)
+                            {
+                                property.CurrentValue = DateTime.SpecifyKind(value, DateTimeKind.Utc);
+                            }
+                            else if (value.Kind == DateTimeKind.Local)
+                            {
+                                property.CurrentValue = value.ToUniversalTime();
+                            }
                         }
                     }
                     else if (property.Metadata.ClrType == typeof(DateTime?))

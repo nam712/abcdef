@@ -17,22 +17,20 @@ namespace YourShopManagement.API.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int InvoiceId { get; set; }
 
-        // ✅ Liên kết chủ shop (NOT NULL)
-        [Required]
-        [Column("shop_owner_id")]
-        public int ShopOwnerId { get; set; }
-
         [Required(ErrorMessage = "Mã hóa đơn không được để trống")]
         [MaxLength(50)]
         [Column("invoice_code")]
         public string InvoiceCode { get; set; } = string.Empty;
 
-        [Required]
         [Column("customer_id")]
-        public int CustomerId { get; set; }
+        public int? CustomerId { get; set; }
 
+        [Required]
         [Column("employee_id")]
-        public int? EmployeeId { get; set; }
+        public int EmployeeId { get; set; }
+
+        [Column("shop_id")]
+        public int? ShopId { get; set; }
 
         [Required]
         [Column("invoice_date")]
@@ -71,19 +69,24 @@ namespace YourShopManagement.API.Models
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // ✅ Navigation Properties
+        // Navigation Properties
         [ForeignKey("CustomerId")]
-        public virtual Customer Customer { get; set; } = null!;
+        public virtual Customer? Customer { get; set; }
 
         [ForeignKey("EmployeeId")]
-        public virtual Employee? Employee { get; set; }
+        public virtual Employee Employee { get; set; } = null!;
 
         [ForeignKey("PaymentMethodId")]
         public virtual PaymentMethod? PaymentMethod { get; set; }
 
-        [ForeignKey("ShopOwnerId")]
-        public virtual ShopOwner ShopOwner { get; set; } = null!;
+        [ForeignKey("ShopId")]
+        public virtual Shop? Shop { get; set; }
 
         public virtual ICollection<InvoiceDetail>? InvoiceDetails { get; set; }
+
+        /// <summary>
+        /// Danh sách khuyến mãi áp dụng cho hóa đơn này
+        /// </summary>
+        public virtual ICollection<Promotion>? Promotions { get; set; }
     }
 }

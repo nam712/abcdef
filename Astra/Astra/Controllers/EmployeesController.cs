@@ -90,9 +90,6 @@ namespace Backend.Controllers
                     return Unauthorized(new { message = "Không xác định được chủ cửa hàng" });
                 }
 
-                // Set ShopOwnerId cho employee
-                employeeDto.ShopOwnerId = shopOwnerId;
-
                 var created = await _service.AddAsync(employeeDto);
                 return CreatedAtAction(nameof(GetById), new { id = created.EmployeeId }, created);
             }
@@ -149,7 +146,12 @@ namespace Backend.Controllers
 
                 // ShopOwner có thể cập nhật toàn bộ
                 await _service.UpdateAsync(employeeDto);
-                return NoContent();
+                return Ok(new { 
+                    message = "Cập nhật nhân viên thành công", 
+                    employeeId = id,
+                    employeeCode = employeeDto.EmployeeCode,
+                    employeeName = employeeDto.EmployeeName
+                });
             }
             catch (Exception ex)
             {
@@ -325,8 +327,17 @@ namespace Backend.Controllers
         {
             try
             {
+                var employee = await _service.GetByIdAsync(id);
+                if (employee == null)
+                    return NotFound(new { message = $"Không tìm thấy nhân viên với ID = {id}" });
+
                 await _service.DeleteAsync(id);
-                return NoContent();
+                return Ok(new { 
+                    message = "Xóa nhân viên thành công", 
+                    employeeId = id,
+                    employeeCode = employee.EmployeeCode,
+                    employeeName = employee.EmployeeName
+                });
             }
             catch (Exception ex)
             {

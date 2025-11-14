@@ -8,5 +8,6 @@ namespace YourShopManagement.API.Services
         Task<IEnumerable<PurchaseOrderDto>> GetAllAsync();
         Task<PurchaseOrderDto?> GetByIdAsync(int id);
         Task<(bool Success, string Message)> DeleteAsync(int id);
+        Task<(bool Success, string Message)> ConfirmPurchaseOrderAsync(int purchaseOrderId);
     }
 }
