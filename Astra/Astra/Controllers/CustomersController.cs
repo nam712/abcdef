@@ -13,7 +13,6 @@ namespace YourShopManagement.API.Controllers
    
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "ShopOwner")]
   
     public class CustomersController : ControllerBase
     {
