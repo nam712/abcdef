@@ -7,6 +7,7 @@ namespace YourShopManagement.API.Common
         public List<string> Errors { get; set; } = new();
         public T? Data { get; set; }
 
+
         public ApiResponse(bool success, string? message = null, List<string>? errors = null, T? data = default)
         {
             Success = success;
