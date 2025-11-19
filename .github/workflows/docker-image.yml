@@ -1,0 +1,109 @@
+name: CI/CD to Google Cloud Run
+
+on:
+  # Khi mở Pull Request vào nhánh dev → chỉ test
+  pull_request:
+    branches: [ "main" ]
+
+  # Khi merge hoặc push trực tiếp vào dev → deploy
+  push:
+    branches: [ "main" ]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION }}
+  REPO_NAME: vipos-docker 
+  API_IMAGE: shop-api       
+  FRONTEND_IMAGE: shop-frontend 
+
+jobs:
+
+  # ===================================================================
+  # JOB 1: Chạy TEST — chỉ chạy khi PULL REQUEST vào nhánh dev
+  # ===================================================================
+  build-and-test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore & Build Backend
+        run: |
+          cd Astra 
+          dotnet restore
+          dotnet build --no-restore
+
+      - name: Run Unit Tests
+        run: dotnet test ./Astra/Backend.Tests/Backend.Tests.csproj --verbosity normal
+
+      - name: Docker Build Check - Backend
+        run: docker build -t temp-api ./Astra/Astra 
+
+      - name: Docker Build Check - Frontend
+        run: docker build -t temp-frontend ./fedoan
+
+
+  # ===================================================================
+  # JOB 2: DEPLOY — chỉ chạy khi PUSH vào nhánh dev (sau khi merge)
+  # ===================================================================
+  deploy-gcp:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Configure Docker for GCP
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build & Push Backend
+        run: |
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.API_IMAGE }}:${{ github.sha }} ./Astra/Astra
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.API_IMAGE }}:${{ github.sha }}
+
+      - name: Build & Push Frontend
+        run: |
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }} ./fedoan
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+
+      - name: Deploy Backend to Cloud Run
+        id: deploy-backend
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.API_IMAGE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.API_IMAGE }}:${{ github.sha }}
+          flags: '--port=8080 --allow-unauthenticated --add-cloudsql-instances=${{ secrets.GCP_SQL_CONNECTION_NAME }}'
+          env_vars: |
+            ConnectionStrings__DefaultConnection=${{ secrets.DB_CONNECTION_STRING }}
+            ASPNETCORE_ENVIRONMENT=Development
+
+
+      - name: Deploy Frontend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.FRONTEND_IMAGE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          flags: '--port=8080 --allow-unauthenticated'
+
+      - name: Show Output
+        run: |
+          echo "Backend URL: ${{ steps.deploy-backend.outputs.url }}"
