@@ -11,7 +11,6 @@ namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "ShopOwner")]
     public class PaymentMethodsController : ControllerBase
     {
         private readonly IPaymentMethodService _service;
